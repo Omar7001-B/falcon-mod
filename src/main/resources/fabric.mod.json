@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "tutorial",
+	"version": "${version}",
+	"name": "Tutorial",
+	"description": "This is Tutorial Mod made by Omar",
+	"authors": [
+		"Omar"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/tutorial/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.omar.tutorial.Tutorial"
+		],
+		"client": [
+			"net.omar.tutorial.TutorialClient"
+		],
+		"fabric-datagen": [
+			"net.omar.tutorial.TutorialDataGenerator"
+		]
+	},
+	"mixins": [
+		"tutorial.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.2",
+		"minecraft": "~1.20",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
