@@ -1,6 +1,7 @@
 package net.omar.tutorial;
 
 import net.fabricmc.api.ClientModInitializer;
+// Comment Added
 
 public class TutorialClient implements ClientModInitializer {
     @Override
