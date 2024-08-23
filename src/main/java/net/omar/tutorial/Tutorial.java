@@ -1,16 +1,25 @@
 package net.omar.tutorial;
 
+import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
+import net.minecraft.network.message.MessageType;
+import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class Tutorial implements ModInitializer {
 	// declare the client
@@ -22,31 +31,40 @@ public class Tutorial implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	private final Map<String, Consumer<String>> commands = new HashMap<>();
+
+	// make map for the commands, key = string, value = function
+
 	@Override
 	public void onInitialize() {
-		// Register chat message event handler
+		LOGGER.info("Hello Fabric world!");
+		commands.put("!ran", this::generateRandomNumber);
 		ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessage);
-
-		LOGGER.info("Random Number Generator Mod Initialized!");
 	}
 
 
 	private boolean onChatMessage(String message) {
-		if (message.startsWith("!ran")) {
-			// Generate a random number
-			Random random = new Random();
-			int randomNumber = random.nextInt(100) + 1; // Generates a number between 1 and 100
-
-			// Send the random number as a chat message
-			if (client.player != null) {
-				client.player.sendMessage(Text.literal("Random Number: " + randomNumber), false);
+		for (Map.Entry<String, Consumer<String>> entry : commands.entrySet()) {
+			if (message.startsWith(entry.getKey())) {
+				entry.getValue().accept(message);
+				return false;
 			}
-
-			// Returning false to prevent the original message from being sent
-			return false;
 		}
-
-		// Allow normal message processing if it's not the "!ran" command
 		return true;
 	}
+
+
+	// ----------------------------- Functions -----------------------------
+
+	// Generate a random number between 1 and 100
+	void generateRandomNumber(String message) {
+		Random random = new Random();
+		int randomNumber = random.nextInt(100) + 1; // Generates a number between 1 and 100
+
+		// Send the random number as a chat message
+		if (client.player != null) {
+			client.player.sendMessage(Text.literal("Random Dude: " + randomNumber), false);
+		}
+	}
+
 }
