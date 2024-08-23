@@ -2,16 +2,19 @@ package net.omar.tutorial;
 
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.ModInitializer;
-
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,26 +25,42 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 public class Tutorial implements ModInitializer {
-	// declare the client
-	private static final MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+	// Declare the client
+	private static final MinecraftClient client = MinecraftClient.getInstance();
 	public static final String MOD_ID = "tutorial";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
+	// Logger for console and log file
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	// Map for the commands, key = string, value = function
 	private final Map<String, Consumer<String>> commands = new HashMap<>();
 
-	// make map for the commands, key = string, value = function
+	// Keybinding declaration
+	private static KeyBinding keyBinding;
 
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Hello Fabric world!");
-		commands.put("!ran", this::generateRandomNumber);
-		ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessage);
-	}
 
+		// Register commands
+		commands.put("!omar", this::generateRandomNumber);
+		ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessage);
+
+		// Register the keybinding
+		keyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				"key.tutorial.randomchat", // The translation key of the keybinding's name
+				InputUtil.Type.KEYSYM, // The type of the keybinding (KEYSYM for keyboard)
+				GLFW.GLFW_KEY_R, // Default key: R
+				"category.tutorial.keybindings" // The translation key of the keybinding's category
+		));
+
+		// Register tick event to listen for key presses
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (keyBinding.wasPressed()) {
+				sendRandomChatMessage();
+			}
+		});
+	}
 
 	private boolean onChatMessage(String message) {
 		for (Map.Entry<String, Consumer<String>> entry : commands.entrySet()) {
@@ -52,7 +71,6 @@ public class Tutorial implements ModInitializer {
 		}
 		return true;
 	}
-
 
 	// ----------------------------- Functions -----------------------------
 
@@ -67,4 +85,22 @@ public class Tutorial implements ModInitializer {
 		}
 	}
 
+	// Send a random chat message when the keybinding is pressed
+	void sendRandomChatMessage() {
+		String[] messages = {
+				"Hello guys!",
+				"What's up everyone?",
+				"Hey there!",
+				"How's it going?",
+				"Good day, folks!"
+		};
+
+		// Choose a random message from the array
+		String randomMessage = messages[new Random().nextInt(messages.length)];
+
+		// Send the message in chat
+		if (client.player != null) {
+			client.player.networkHandler.sendChatMessage(randomMessage);
+		}
+	}
 }
