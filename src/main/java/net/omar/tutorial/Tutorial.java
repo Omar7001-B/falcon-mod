@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.network.message.MessageType;
@@ -24,6 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 
+
 public class Tutorial implements ModInitializer {
 	// Declare the client
 	private static final MinecraftClient client = MinecraftClient.getInstance();
@@ -32,75 +32,81 @@ public class Tutorial implements ModInitializer {
 	// Logger for console and log file
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	// Map for the commands, key = string, value = function
-	private final Map<String, Consumer<String>> commands = new HashMap<>();
+	// ----------------------------- Key Bindings -----------------------------
+	// Container for key bindings and their corresponding functions
+	private final Map<KeyBinding, Runnable> keyBindings = new HashMap<>();
 
-	// Keybinding declaration
-	private static KeyBinding keyBinding;
+	// Register a new key binding and store it in the container
+	private void registerKeyBinding(String translationKey, int keyCode, Runnable action) {
+		KeyBinding keyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				translationKey,
+				InputUtil.Type.KEYSYM,
+				keyCode,
+				"category.tutorial.keybindings"
+		));
+		keyBindings.put(keyBinding, action);
+	}
+
+	// ----------------------------- Custom Chat Commands -----------------------------
+	// Container for custom chat commands and their corresponding functions
+	private final Map<String, Consumer<String>> customCommands = new HashMap<>();
+
+	// Register a new custom chat command and store it in the container
+	private void registerCustomCommand(String command, Consumer<String> action) { customCommands.put(command, action); }
+
+	// Handle incoming chat messages and trigger corresponding custom commands
+	private boolean onChatMessage(String message) {
+		for (Map.Entry<String, Consumer<String>> entry : customCommands.entrySet()) {
+			if (message.startsWith(entry.getKey())) {
+				entry.getValue().accept(message);
+				return false; // Prevent further processing of the message
+			}
+		}
+		return true; // Allow the message to be processed normally if no command matches
+	}
 
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Hello Fabric world!");
 
-		// Register commands
-		commands.put("!omar", this::generateRandomNumber);
+		// Register chat message event to handle custom commands
 		ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessage);
 
-		// Register the keybinding
-		keyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.tutorial.randomchat", // The translation key of the keybinding's name
-				InputUtil.Type.KEYSYM, // The type of the keybinding (KEYSYM for keyboard)
-				GLFW.GLFW_KEY_R, // Default key: R
-				"category.tutorial.keybindings" // The translation key of the keybinding's category
-		));
+		// Register key bindings
+		registerKeyBinding("key.tutorial.randomchat", GLFW.GLFW_KEY_R, () -> sendRandomChatMessage(""));
+		registerKeyBinding("key.tutorial.shop", GLFW.GLFW_KEY_SLASH, () -> sendShopCommand(""));
+		registerKeyBinding("key.tutorial.pv1", GLFW.GLFW_KEY_KP_MULTIPLY, () -> openPV1(""));
+
+		// Register custom chat commands
+		registerCustomCommand("!random", this::sendRandomChatMessage);
 
 		// Register tick event to listen for key presses
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			while (keyBinding.wasPressed()) {
-				sendRandomChatMessage();
-			}
+			// Log the key presses
+			keyBindings.forEach((keyBinding, action) -> {
+				if (keyBinding.wasPressed()) action.run();
+			});
 		});
 	}
 
-	private boolean onChatMessage(String message) {
-		for (Map.Entry<String, Consumer<String>> entry : commands.entrySet()) {
-			if (message.startsWith(entry.getKey())) {
-				entry.getValue().accept(message);
-				return false;
-			}
-		}
-		return true;
-	}
+	// ----------------------------- Helper Functions -----------------------------
+	// Make function to send command
+	private void sendCommand(String command) { if (client.player != null) client.player.networkHandler.sendChatCommand(command); }
+
+	// Make function to send message
+	private void sendChatMessage(String message) { if (client.player != null) client.player.networkHandler.sendChatMessage(message); }
 
 	// ----------------------------- Functions -----------------------------
-
-	// Generate a random number between 1 and 100
-	void generateRandomNumber(String message) {
-		Random random = new Random();
-		int randomNumber = random.nextInt(100) + 1; // Generates a number between 1 and 100
-
-		// Send the random number as a chat message
-		if (client.player != null) {
-			client.player.sendMessage(Text.literal("Random Dude: " + randomNumber), false);
-		}
-	}
-
-	// Send a random chat message when the keybinding is pressed
-	void sendRandomChatMessage() {
-		String[] messages = {
-				"Hello guys!",
-				"What's up everyone?",
-				"Hey there!",
-				"How's it going?",
-				"Good day, folks!"
-		};
-
-		// Choose a random message from the array
+	// Send a random chat message
+	private void sendRandomChatMessage(String unused) {
+		String[] messages = { "Hello guys!", "What's up everyone?", "Hey there!", "How's it going?", "Good day, folks!" };
 		String randomMessage = messages[new Random().nextInt(messages.length)];
-
-		// Send the message in chat
-		if (client.player != null) {
-			client.player.networkHandler.sendChatMessage(randomMessage);
-		}
+		sendChatMessage(randomMessage);
 	}
+
+	// Send the /shop command
+	private void sendShopCommand(String unused) { sendCommand("shop"); }
+
+	// Open PV 1
+	private void openPV1(String unused) { sendCommand("pv 1"); }
 }
