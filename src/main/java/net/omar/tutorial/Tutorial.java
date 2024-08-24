@@ -37,12 +37,12 @@ public class Tutorial implements ModInitializer {
 	private final Map<KeyBinding, Runnable> keyBindings = new HashMap<>();
 
 	// Register a new key binding and store it in the container
-	private void registerKeyBinding(String translationKey, int keyCode, Runnable action) {
+	private void registerKeyBinding(String translationKey, String categoryName, int keyCode, Runnable action) {
 		KeyBinding keyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				translationKey,
 				InputUtil.Type.KEYSYM,
 				keyCode,
-				"category.tutorial.keybindings"
+				categoryName
 		));
 		keyBindings.put(keyBinding, action);
 	}
@@ -73,9 +73,9 @@ public class Tutorial implements ModInitializer {
 		ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessage);
 
 		// Register key bindings
-		registerKeyBinding("key.tutorial.randomchat", GLFW.GLFW_KEY_R, () -> sendRandomChatMessage(""));
-		registerKeyBinding("key.tutorial.shop", GLFW.GLFW_KEY_SLASH, () -> sendShopCommand(""));
-		registerKeyBinding("key.tutorial.pv1", GLFW.GLFW_KEY_KP_MULTIPLY, () -> openPV1(""));
+		registerKeyBinding("Random Message", "Chat", GLFW.GLFW_KEY_R, () -> sendRandomChatMessage(""));
+		registerKeyBinding("Open Shop", "Farm", GLFW.GLFW_KEY_SLASH, () -> sendShopCommand(""));
+		registerKeyBinding("Open PV", "Farm", GLFW.GLFW_KEY_KP_MULTIPLY, () -> openPV1(""));
 
 		// Register custom chat commands
 		registerCustomCommand("!random", this::sendRandomChatMessage);
