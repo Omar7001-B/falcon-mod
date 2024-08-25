@@ -6,9 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.SleepingChatScreen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.option.KeyBinding;
@@ -23,12 +21,16 @@ import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.classes.Conversion;
+import net.omar.tutorial.classes.Market;
+import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.classes.TreeNode;
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,134 +39,10 @@ import java.util.Random;
 import java.util.function.Consumer;
 import java.util.List;
 
+import static net.omar.tutorial.classes.Market.ironPickaxes_P2;
+
 
 public class Tutorial implements ModInitializer {
-
-	// Shop first page
-	public static String compressors_P1 = "ᴄᴏᴍᴘʀᴇssᴏʀs";
-		public static String compressOre_P2 = "ᴄᴏᴍᴘʀᴇss ᴏʀᴇ";
-		public static String decompressOre_P2 = "ᴅᴇᴄᴏᴍᴘʀᴇss ᴏʀᴇ";
-
-	public static String swords_P1 = "sᴡᴏʀᴅs";
-		public static String woodenSwords_P2 = "ᴡᴏᴏᴅᴇɴ sᴡᴏʀᴅs";
-		public static String stoneSwords_P2 = "sᴛᴏɴᴇ sᴡᴏʀᴅs";
-		public static String ironSwords_P2 = "ɪʀᴏɴ sᴡᴏʀᴅs";
-		public static String diamondSwords_P2 = "ᴅɪᴀᴍᴏɴᴅ sᴡᴏʀᴅs";
-		public static String netheriteSwords_P2 = "ɴᴇᴛʜᴇʀɪᴛᴇ sᴡᴏʀᴅs";
-
-
-	public static String armors_P1 = "ᴀʀᴍᴏʀs";
-		public static String leatherArmors_P2 = "ʟᴇᴀᴛʜᴇʀ ᴀʀᴍᴏʀs";
-		public static String ironArmors_P2 = "ɪʀᴏɴ ᴀʀᴍᴏʀs";
-		public static String diamondArmors_P2 = "ᴅɪᴀᴍᴏɴᴅ ᴀʀᴍᴏʀs";
-		public static String netheriteArmors_P2 = "ɴᴇᴛʜᴇʀɪᴛᴇ ᴀʀᴍᴏʀs";
-
-	public static String pickaxes_P1 = "ᴘɪᴄᴋᴀxᴇs";
-		public static String woodenPickaxes_P2 = "ᴡᴏᴏᴅᴇɴ ᴘɪᴄᴋᴀxᴇs";
-		public static String stonePickaxes_P2 = "sᴛᴏɴᴇ ᴘɪᴄᴋᴀxᴇs";
-		public static String ironPickaxes_P2 = "ɪʀᴏɴ ᴘɪᴄᴋᴀxᴇs";
-		public static String diamondPickaxes_P2 = "ᴅɪᴀᴍᴏɴᴅ ᴘɪᴄᴋᴀxᴇs";
-		public static String netheritePickaxes_P2 = "ɴᴇᴛʜᴇʀɪᴛᴇ ᴘɪᴄᴋᴀxᴇs";
-
-	public static String axes_P1 = "ᴀxᴇs";
-		public static String woodenAxes_P2 = "ᴡᴏᴏᴅᴇɴ ᴀxᴇs";
-		public static String stoneAxes_P2 = "sᴛᴏɴᴇ ᴀxᴇs";
-		public static String ironAxes_P2 = "ɪʀᴏɴ ᴀxᴇs";
-		public static String diamondAxes_P2 = "ᴅɪᴀᴍᴏɴᴅ ᴀxᴇs";
-		public static String netheriteAxes_P2 = "ɴᴇᴛʜᴇʀɪᴛᴇ ᴀxᴇs";
-
-	public static String misc_P1 = "ᴍɪsᴄ";
-		public static String foods_P2 = "ғᴏᴏᴅs";
-		public static String pvpUtilities_P2 = "ᴘᴠᴘ ᴜᴛɪʟɪᴛɪᴇs";
-		public static String shulkers_P2 = "sʜᴜʟᴋᴇʀs";
-		public static String air_P2 = "Air";
-		public static String potions_P2 = "ᴘᴏᴛɪᴏɴs";
-		public static String elytra_P2 = "ᴇʟʏᴛʀᴀ";
-		public static String blocks_P2 = "ʙʟᴏᴄᴋs";
-
-
-	public static TreeNode buildTree() {
-		TreeNode root = new TreeNode("Root");
-
-		// Construct tree using search and addChild in one line
-		root.addChild(new TreeNode(compressors_P1));
-		root.search(compressors_P1).addChild(new TreeNode(compressOre_P2));
-		root.search(compressors_P1).addChild(new TreeNode(decompressOre_P2));
-
-		root.addChild(new TreeNode(swords_P1));
-		root.search(swords_P1).addChild(new TreeNode(woodenSwords_P2));
-		root.search(swords_P1).addChild(new TreeNode(stoneSwords_P2));
-		root.search(swords_P1).addChild(new TreeNode(ironSwords_P2));
-		root.search(swords_P1).addChild(new TreeNode(diamondSwords_P2));
-		root.search(swords_P1).addChild(new TreeNode(netheriteSwords_P2));
-
-		root.addChild(new TreeNode(armors_P1));
-		root.search(armors_P1).addChild(new TreeNode(leatherArmors_P2));
-		root.search(armors_P1).addChild(new TreeNode(ironArmors_P2));
-		root.search(armors_P1).addChild(new TreeNode(diamondArmors_P2));
-		root.search(armors_P1).addChild(new TreeNode(netheriteArmors_P2));
-
-		root.addChild(new TreeNode(pickaxes_P1));
-		root.search(pickaxes_P1).addChild(new TreeNode(woodenPickaxes_P2));
-		root.search(pickaxes_P1).addChild(new TreeNode(stonePickaxes_P2));
-		root.search(pickaxes_P1).addChild(new TreeNode(ironPickaxes_P2));
-		root.search(pickaxes_P1).addChild(new TreeNode(diamondPickaxes_P2));
-		root.search(pickaxes_P1).addChild(new TreeNode(netheritePickaxes_P2));
-
-		root.addChild(new TreeNode(axes_P1));
-		root.search(axes_P1).addChild(new TreeNode(woodenAxes_P2));
-		root.search(axes_P1).addChild(new TreeNode(stoneAxes_P2));
-		root.search(axes_P1).addChild(new TreeNode(ironAxes_P2));
-		root.search(axes_P1).addChild(new TreeNode(diamondAxes_P2));
-		root.search(axes_P1).addChild(new TreeNode(netheriteAxes_P2));
-
-		root.addChild(new TreeNode(misc_P1));
-		root.search(misc_P1).addChild(new TreeNode(foods_P2));
-		root.search(misc_P1).addChild(new TreeNode(pvpUtilities_P2));
-		root.search(misc_P1).addChild(new TreeNode(shulkers_P2));
-		root.search(misc_P1).addChild(new TreeNode(air_P2));
-		root.search(misc_P1).addChild(new TreeNode(potions_P2));
-		root.search(misc_P1).addChild(new TreeNode(elytra_P2));
-		root.search(misc_P1).addChild(new TreeNode(blocks_P2));
-
-		return root;
-	}
-
-	public static TreeNode shop = buildTree();
-
-	// Shop second page
-
-	// Compress Ore Conversions
-	Conversion cobblestoneToGoldenNugget = new Conversion( List.of(compressors_P1, compressOre_P2), 1, "Cobblestone", 64, "Golden Nugget", 1 );
-	Conversion coalToGoldenNuggets = new Conversion( List.of(compressors_P1, compressOre_P2), 2, "Coal", 64, "Golden Nugget", 2 );
-	Conversion ironToGoldenNuggets = new Conversion( List.of(compressors_P1, compressOre_P2), 3, "Iron Ingot", 64, "Golden Nugget", 3 );
-	Conversion diamondsToGoldenNuggets = new Conversion( List.of(compressors_P1, compressOre_P2), 4, "Diamond", 12, "Golden Nugget", 5 );
-	Conversion emeraldsToGoldenNuggets = new Conversion( List.of(compressors_P1, compressOre_P2), 5, "Emerald", 12, "Golden Nugget", 6 );
-	Conversion ironToCompressedGold = new Conversion( List.of(compressors_P1, compressOre_P2), 7, "Iron Ingot", 64, "Compressed Raw Gold", 2, "Iron Ingot", 32 );
-	Conversion diamondsToCompressedRawGold = new Conversion(List.of(compressors_P1, compressOre_P2), 8, "Diamond", 64, "Compressed Raw Gold", 3);
-	Conversion emeraldsToCompressedRawGold = new Conversion(List.of(compressors_P1, compressOre_P2), 9, "Emerald", 64, "Compressed Raw Gold", 6);
-	Conversion ironToGoldenIngot = new Conversion( List.of(compressors_P1, compressOre_P2), 11, "Iron Ingot", 64, "Golden Ingot", 1, "Iron Ingot", 64);
-	Conversion diamondsToGoldenIngot = new Conversion(List.of(compressors_P1, compressOre_P2), 12, "Diamond", 64, "Golden Ingot", 2, "Diamond", 32);
-	Conversion emeraldsToGoldenIngot = new Conversion(List.of(compressors_P1, compressOre_P2), 13, "Emerald", 64, "Golden Ingot", 3, "Emerald", 32);
-	Conversion diamondToGoldenBlock = new Conversion(List.of(compressors_P1, compressOre_P2), 15, "Diamond", 64, "Golden Block", 1, "Diamond", 64);
-	Conversion emeraldToGoldenBlock = new Conversion(List.of(compressors_P1, compressOre_P2), 16, "Emerald", 64, "Golden Block", 2, "Emerald", 64);
-
-	// Decompress Ore Conversions
-	Conversion goldenNuggetToCobblestone = new Conversion(List.of(compressors_P1, decompressOre_P2), 1, "Golden Nugget", 1, "Cobblestone", 64);
-	Conversion goldenNuggetsToCoal = new Conversion(List.of(compressors_P1, decompressOre_P2), 2, "Golden Nugget", 2, "Coal", 64);
-	Conversion goldenNuggetsToIron = new Conversion(List.of(compressors_P1, decompressOre_P2), 3, "Golden Nugget", 3, "Iron Ingot", 32);
-	Conversion goldenNuggetsToDiamonds = new Conversion(List.of(compressors_P1, decompressOre_P2), 4, "Golden Nugget", 5, "Diamond", 12);
-	Conversion goldenNuggetsToEmeralds = new Conversion(List.of(compressors_P1, decompressOre_P2), 5, "Golden Nugget", 6, "Emerald", 12);
-	Conversion compressedGoldToIron = new Conversion(List.of(compressors_P1, decompressOre_P2), 7, "Compressed Raw Gold", 2, "Iron Ingot", 64, "Iron Ingot", 32);
-	Conversion compressedRawGoldToDiamonds = new Conversion(List.of(compressors_P1, decompressOre_P2), 8, "Compressed Raw Gold", 3, "Diamond", 64);
-	Conversion compressedRawGoldToEmeralds = new Conversion(List.of(compressors_P1, decompressOre_P2), 9, "Compressed Raw Gold", 6, "Emerald", 64);
-	Conversion goldenIngotToIron = new Conversion(List.of(compressors_P1, decompressOre_P2), 11, "Golden Ingot", 1, "Iron Ingot", 64, "Iron Ingot", 64);
-	Conversion goldenIngotToDiamonds = new Conversion(List.of(compressors_P1, decompressOre_P2), 12, "Golden Ingot", 2, "Diamond", 64, "Diamond", 32);
-	Conversion goldenIngotToEmeralds = new Conversion(List.of(compressors_P1, decompressOre_P2), 13, "Golden Ingot", 3, "Emerald", 64, "Emerald", 32);
-	Conversion goldenBlockToDiamond = new Conversion(List.of(compressors_P1, decompressOre_P2), 15, "Golden Block", 1, "Diamond", 64, "Diamond", 64);
-	Conversion goldenBlockToEmerald = new Conversion(List.of(compressors_P1, decompressOre_P2), 16, "Golden Block", 2, "Emerald", 64, "Emerald", 64);
-
-
 
 	// Declare the client
 	private static final MinecraftClient client = MinecraftClient.getInstance();
@@ -322,7 +200,7 @@ public class Tutorial implements ModInitializer {
 //		String secondPriceName = offer.getSecondBuyItem().getName().getString();
 //		int secondPriceCount = offer.getSecondBuyItem().getCount();
 //
-//		// Log item prices
+//		// Log x prices
 //		LOGGER.info("{}: {}", firstPriceName, firstPriceCount);
 //		LOGGER.info("{}: {}", secondPriceName, secondPriceCount);
 //
@@ -447,7 +325,7 @@ public class Tutorial implements ModInitializer {
 		}
 		LOGGER.info("-------------------");
 	}
-	public static void printAllTrades() {
+	public static void printAllTrades(String fileName) {
 		if (!(MinecraftClient.getInstance().currentScreen instanceof MerchantScreen)) {
 			return; // Exit if the current screen is not a villager trade screen
 		}
@@ -457,11 +335,11 @@ public class Tutorial implements ModInitializer {
 				.getScreenHandler().getRecipes();
 
 		if (offers == null || offers.isEmpty()) {
-			LOGGER.info("No trades available.");
+			log("No trades available.", fileName);
 			return;
 		}
 
-		LOGGER.info("---------- Villager Trades ----------");
+		log("---------- Villager Trades ----------", fileName);
 
 		// Loop through all available trades
 		for (int i = 0; i < offers.size(); i++) {
@@ -480,12 +358,58 @@ public class Tutorial implements ModInitializer {
 			String sellName = offer.getSellItem().getName().getString();
 
 			// Log all trade details
-			LOGGER.info("Trade " + (i + 1) + ":");
-			LOGGER.info("    First Item: " + firstPriceCount + " x " + firstPriceName);
-			LOGGER.info("    Second Item: " + (secondPriceCount > 0 ? secondPriceCount + " x " + secondPriceName : "None"));
-			LOGGER.info("    Result: " + sellCount + " x " + sellName);
-			LOGGER.info("------------------------------------");
+			log("Trade " + (i + 1) + ":", fileName);
+			log("    First Item: " + firstPriceCount + " x " + firstPriceName, fileName);
+			log("    Second Item: " + (secondPriceCount > 0 ? secondPriceCount + " x " + secondPriceName : "None"), fileName);
+			log("    Result: " + sellCount + " x " + sellName, fileName);
+			log("------------------------------------", fileName);
 		}
+	}
+
+	private static void log(String message, String fileName) {
+		if (fileName != null && !fileName.isEmpty()) {
+			try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+				writer.write(message);
+				writer.newLine();
+			} catch (IOException e) {
+				LOGGER.warn("Failed to write to file: " + e.getMessage());
+			}
+		} else {
+			LOGGER.info(message);
+		}
+	}
+
+
+
+	public static void bigAllTrades()
+	{
+		if(false) return;
+		List<TreeNode> g1 = Arrays.asList(Market.compressOre_P2, Market.decompressOre_P2);
+		List<TreeNode> g2 = Arrays.asList(Market.woodenSwords_P2, Market.stoneSwords_P2, Market.ironSwords_P2, Market.diamondSwords_P2, Market.netheriteSwords_P2);
+		List<TreeNode> g3 = Arrays.asList(Market.leatherArmors_P2, Market.ironArmors_P2, Market.diamondArmors_P2, Market.netheriteArmors_P2);
+		List<TreeNode> g4 = Arrays.asList(Market.woodenPickaxes_P2, Market.stonePickaxes_P2, Market.ironPickaxes_P2, Market.diamondPickaxes_P2, Market.netheritePickaxes_P2);
+		List<TreeNode> g5 = Arrays.asList(Market.woodenAxes_P2, Market.stoneAxes_P2, Market.ironAxes_P2, Market.diamondAxes_P2, Market.netheriteAxes_P2);
+		List<TreeNode> g6 = Arrays.asList(Market.foods_P2, Market.pvpUtilitys_P2, Market.shulkers_P2,  Market.potions_P2, Market.elytra_P2, Market.blocks_P2);
+
+		List<TreeNode> All = Arrays.asList(Market.compressOre_P2, Market.decompressOre_P2, Market.woodenSwords_P2, Market.stoneSwords_P2, Market.ironSwords_P2, Market.diamondSwords_P2, Market.netheriteSwords_P2, Market.leatherArmors_P2, Market.ironArmors_P2, Market.diamondArmors_P2, Market.netheriteArmors_P2, Market.woodenPickaxes_P2, Market.stonePickaxes_P2, Market.ironPickaxes_P2, Market.diamondPickaxes_P2, Market.netheritePickaxes_P2, Market.woodenAxes_P2, Market.stoneAxes_P2, Market.ironAxes_P2, Market.diamondAxes_P2, Market.netheriteAxes_P2, Market.foods_P2, Market.pvpUtilitys_P2, Market.shulkers_P2,  Market.potions_P2, Market.elytra_P2, Market.blocks_P2);
+
+		Thread thread = new Thread(() -> {
+			List<TreeNode> turn = All;
+			for(int i = 0; i < turn.size(); i++){
+				List<String> path = turn.get(i).getPathFromRoot();
+				LOGGER.info("Path of" + turn.get(i) + " is " + path);
+				openShop();
+				clickSlot(searchSlots(path.get(1), true));
+				Sleep(1000);
+				clickSlot(searchSlots(path.get(2), true));
+				Sleep(1000);
+				LOGGER.info("Trades of" + turn.get(i) );
+				printAllTrades(path.get(2) +".txt");
+				closeScreen();
+				Sleep(1000);
+			}
+		});
+		thread.start();
 	}
 
 
@@ -513,50 +437,91 @@ public class Tutorial implements ModInitializer {
 		waitForScreen(GenericContainerScreen.class);
 		Sleep(SHOP_DELAY);
 	}
+
+	public static void closeScreen(){
+		MinecraftClient.getInstance().execute(()->{
+			if(MinecraftClient.getInstance().currentScreen != null){
+				MinecraftClient.getInstance().currentScreen.close();
+			}
+		});
+	}
 	private static void openShop(String unused) { sendCommand("shop"); }
 
 	// Open PV 1
 	private static void openPV1(String unused) { sendCommand("pv 1"); }
 
-	// Test function to send a signed message
-	private static void testFunction(String unused) {
-		// Log last message receivedjj
-		// sendChatMessage("Test");
-		LOGGER.info("Test function called");
-		// make  list contain all  p1
+	// Make Trade
 
-		List<String> p1 = Arrays.asList(compressors_P1, swords_P1, armors_P1, pickaxes_P1, axes_P1, misc_P1);
+	public static Slot getSlot(int index){
+		if(MinecraftClient.getInstance().currentScreen instanceof GenericContainerScreen){
+			return ((GenericContainerScreen)MinecraftClient.getInstance().currentScreen).getScreenHandler().slots.get(index);
+		}else if(MinecraftClient.getInstance().currentScreen instanceof MerchantScreen){
+			return ((MerchantScreen)MinecraftClient.getInstance().currentScreen).getScreenHandler().slots.get(index);
+		}
+		return null;
+	}
 
-		List<String> g1 = Arrays.asList(compressOre_P2, decompressOre_P2);
 
-		List<String> g2 = Arrays.asList(woodenSwords_P2, stoneSwords_P2, ironSwords_P2, diamondSwords_P2, netheriteSwords_P2);
-		List<String> g3 = Arrays.asList(leatherArmors_P2, ironArmors_P2, diamondArmors_P2, netheriteArmors_P2);
-		List<String> g4 = Arrays.asList(woodenPickaxes_P2, stonePickaxes_P2, ironPickaxes_P2, diamondPickaxes_P2, netheritePickaxes_P2);
-		List<String> g5 = Arrays.asList(woodenAxes_P2, stoneAxes_P2, ironAxes_P2, diamondAxes_P2, netheriteAxes_P2);
-		List<String> g6 = Arrays.asList(foods_P2, pvpUtilities_P2, shulkers_P2, air_P2, potions_P2, elytra_P2, blocks_P2);
-
-		TreeNode root = buildTree();
-
-		// show path
-
-		List<String> pathWoodenAxes = root.search(g5.get(0)).getPathFromRoot();
-		LOGGER.info("Path from root to " + g5.get(0) + ": " + pathWoodenAxes);
-		for(int i = 0; i < pathWoodenAxes.size(); i++){
-			LOGGER.info("Path from root to " + g5.get(0) + ": " + pathWoodenAxes.get(i));
+	public static int countEmptySlots(int start){
+		DefaultedList<Slot> slots = null;
+		int count = 0;
+		if(MinecraftClient.getInstance().currentScreen instanceof GenericContainerScreen){
+			slots = ((GenericContainerScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().slots;
+		}else if(MinecraftClient.getInstance().currentScreen instanceof MerchantScreen){
+			slots = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().slots;
+		}else{
+			return 0;
 		}
 
+		for(int i = start; i < slots.size(); i++){
+			if(!slots.get(i).hasStack()){
+				count++;
+			}
+		}
+		return count;
+	}
+	public static void makeTrade(int offerIndex) {
+		while (!(MinecraftClient.getInstance().currentScreen instanceof MerchantScreen)) {
+			Sleep(10);
+		}
+		Sleep(DELAY);
+		TradeOffer offer = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().getRecipes().get(offerIndex);
 
-		Thread thread = new Thread(() -> {
-			openShop();
-		clickSlot(searchSlots(p1.get(0), true));
-			Sleep(3000);
-		clickSlot(searchSlots(g1.get(0), true));
-			Sleep(3000);
-			printAllTrades();
-			//printAllSlots();
-		});
-		thread.start();
+		int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
+		String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
+
+		int secondPriceCount = offer.getSecondBuyItem().getCount();
+		String secondPriceName = offer.getSecondBuyItem().getName().getString();
+
+		LOGGER.info(firstPriceName + ": " + firstPriceCount);
+		LOGGER.info(secondPriceName + ": " + secondPriceCount);
+
+		while (countItemInAllSlots(firstPriceName, 0) >= firstPriceCount && ((secondPriceCount == 0 || countItemInAllSlots(secondPriceName, 0) >= (secondPriceCount)) && (!getSlot(0).hasStack() || countEmptySlots(3) != 0))) {
+			if (firstPriceName.equals(secondPriceName) && firstPriceCount + secondPriceCount > countItemInAllSlots(firstPriceName, 0)) {
+				LOGGER.info("Broken");
+				break;
+			}
+			MinecraftClient.getInstance().player.networkHandler.sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
+			clickSlot(2);
+			Sleep(50);
+		}
+	}
 
 
+	// BuyItem
+	private static void executeTrade(Trade item) {
+		List<String> path = item.getPathFromRoot();
+		openShop();
+		Sleep(1000);
+		clickSlot(searchSlots(path.get(1), true));
+		Sleep(1000);
+		clickSlot(searchSlots(path.get(2), true));
+		Sleep(1000);
+		makeTrade(item.TradeIndex);
+	}
+
+	// Test function to send a signed message
+	private static void testFunction(String unused) {
+		executeTrade(Market.ironToGoldIngot_t);
 	}
 }
