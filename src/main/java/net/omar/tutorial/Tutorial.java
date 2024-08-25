@@ -522,6 +522,12 @@ public class Tutorial implements ModInitializer {
 
 	// Test function to send a signed message
 	private static void testFunction(String unused) {
-		executeTrade(Market.ironToGoldIngot_t);
+		Thread thread = new Thread(() -> {
+			executeTrade(Market.rawGoldToEmerald_t);
+			executeTrade(Market.emeraldToGoldNugget_t);
+			executeTrade(Market.goldNuggetToDiamond_t);
+			executeTrade(Market.diamondToRawGold_t);
+		});
+		thread.start();
 	}
 }
