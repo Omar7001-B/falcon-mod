@@ -1,16 +1,20 @@
 package net.omar.tutorial;
 
 import com.mojang.authlib.GameProfile;
+import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
@@ -18,6 +22,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.classes.Conversion;
@@ -181,51 +186,53 @@ public class Tutorial implements ModInitializer {
 		return -1;
 	}
 
-//	public static void makeTrade(int offerIndex) {
-//		MinecraftClient client = MinecraftClient.getInstance();
-//		MerchantScreen merchantScreen;
-//
-//		// Wait until the current screen is MerchantScreen
-//		while (!(client.currentScreen instanceof MerchantScreen)) {
-//			Sleep(10);
-//		}
-//
-//		Sleep(DELAY);
-//		merchantScreen = (MerchantScreen) client.currentScreen;
-//		TradeOffer offer = merchantScreen.getScreenHandler().getRecipes().get(offerIndex);
-//
-//		// Extract price details
-//		String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
-//		int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
-//		String secondPriceName = offer.getSecondBuyItem().getName().getString();
-//		int secondPriceCount = offer.getSecondBuyItem().getCount();
-//
-//		// Log x prices
-//		LOGGER.info("{}: {}", firstPriceName, firstPriceCount);
-//		LOGGER.info("{}: {}", secondPriceName, secondPriceCount);
-//
-//		// Trade process
-//		while (canTrade(firstPriceName, firstPriceCount, secondPriceName, secondPriceCount)) {
-//			if (firstPriceName.equals(secondPriceName) && !canAffordCombinedPrice(firstPriceName, firstPriceCount, secondPriceCount)) {
-//				LOGGER.info("Broken");
-//				break;
-//			}
-//			client.player.networkHandler.sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-//			clickSlot(2);
-//			Sleep(50);
-//		}
-//	}
+	public static void makeTrade(int offerIndex) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		MerchantScreen merchantScreen;
+
+		// Wait until the current screen is MerchantScreen
+		while (!(client.currentScreen instanceof MerchantScreen)) {
+			Sleep(10);
+		}
+
+		Sleep(DELAY);
+		merchantScreen = (MerchantScreen) client.currentScreen;
+		TradeOffer offer = merchantScreen.getScreenHandler().getRecipes().get(offerIndex);
+
+		// Extract price details
+		String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
+		int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
+		String secondPriceName = offer.getSecondBuyItem().getName().getString();
+		int secondPriceCount = offer.getSecondBuyItem().getCount();
+
+		// Log x prices
+		LOGGER.info("{}: {}", firstPriceName, firstPriceCount);
+		LOGGER.info("{}: {}", secondPriceName, secondPriceCount);
+
+		// Trade process
+		while (canTrade(firstPriceName, firstPriceCount, secondPriceName, secondPriceCount)) {
+			if (firstPriceName.equals(secondPriceName) && !canAffordCombinedPrice(firstPriceName, firstPriceCount, secondPriceCount)) {
+				LOGGER.info("Broken");
+				break;
+			}
+			SelectMerchantTradeC2SPacket packet = new SelectMerchantTradeC2SPacket(offerIndex);
+			// Send the packet using the network handler
+			client.getNetworkHandler().sendPacket(packet);
+			clickSlot(2);
+			Sleep(50);
+		}
+	}
 
 	// Helper functions for trade validation
-//	private static boolean canTrade(String firstPriceName, int firstPriceCount, String secondPriceName, int secondPriceCount) {
-//		return countItemInAllSlots(firstPriceName) >= firstPriceCount &&
-//				(secondPriceCount == 0 || countItemInAllSlots(secondPriceName) >= secondPriceCount) &&
-//				(!getSlot(0).hasStack() || countEmptySlots(3) != 0);
-//	}
+	private static boolean canTrade(String firstPriceName, int firstPriceCount, String secondPriceName, int secondPriceCount) {
+		return countItemInAllSlots(firstPriceName) >= firstPriceCount &&
+				(secondPriceCount == 0 || countItemInAllSlots(secondPriceName) >= secondPriceCount) &&
+				(!getSlot(0).hasStack() || countEmptySlots(3) != 0);
+	}
 
-//	private static boolean canAffordCombinedPrice(String itemName, int firstCount, int secondCount) {
-//		return firstCount + secondCount <= countItemInAllSlots(itemName);
-//	}
+	private static boolean canAffordCombinedPrice(String itemName, int firstCount, int secondCount) {
+		return firstCount + secondCount <= countItemInAllSlots(itemName);
+	}
 
 
 	public static void openCompressors() {
@@ -251,6 +258,11 @@ public class Tutorial implements ModInitializer {
 		}
 		return count;
 	}
+
+	public static int countItemInAllSlots(String name) {
+		return countItemInAllSlots(name, 0);
+	}
+
 
 	// Helper function to get slots based on the current screen
 	private static DefaultedList<Slot> getCurrentScreenSlots(MinecraftClient client) {
@@ -480,28 +492,6 @@ public class Tutorial implements ModInitializer {
 		}
 		return count;
 	}
-	public static void makeTrade(int offerIndex) {
-		while (!(MinecraftClient.getInstance().currentScreen instanceof MerchantScreen)) {
-			Sleep(10);
-		}
-		Sleep(DELAY);
-		TradeOffer offer = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().getRecipes().get(offerIndex);
-
-		int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
-		String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
-
-		int secondPriceCount = offer.getSecondBuyItem().getCount();
-		String secondPriceName = offer.getSecondBuyItem().getName().getString();
-
-		LOGGER.info(firstPriceName + ": " + firstPriceCount);
-		LOGGER.info(secondPriceName + ": " + secondPriceCount);
-		LOGGER.info("Offer Index: " + offerIndex);
-
-			MinecraftClient.getInstance().player.networkHandler.sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-			Sleep(500);
-			clickSlot(2);
-			Sleep(500);
-	}
 
 
 	// BuyItem
@@ -513,16 +503,16 @@ public class Tutorial implements ModInitializer {
 		Sleep(1000);
 		clickSlot(searchSlots(path.get(2), true));
 		Sleep(1000);
-		makeTrade(item.TradeIndex);
+		makeTrade(item.TradeIndex-1);
 	}
 
 	// Test function to send a signed message
 	private static void testFunction(String unused) {
 		Thread thread = new Thread(() -> {
-			//executeTrade(Market.rawGoldToEmerald_t);
+			executeTrade(Market.rawGoldToEmerald_t);
 			executeTrade(Market.emeraldToGoldNugget_t);
-			//executeTrade(Market.goldNuggetToDiamond_t);
-			//executeTrade(Market.diamondToRawGold_t);
+			executeTrade(Market.goldNuggetToDiamond_t);
+			executeTrade(Market.diamondToRawGold_t);
 		});
 		thread.start();
 	}
