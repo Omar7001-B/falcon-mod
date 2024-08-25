@@ -509,10 +509,10 @@ public class Tutorial implements ModInitializer {
 	// Test function to send a signed message
 	private static void testFunction(String unused) {
 		Thread thread = new Thread(() -> {
-			executeTrade(Market.rawGoldToEmerald_t);
-			executeTrade(Market.emeraldToGoldNugget_t);
-			executeTrade(Market.goldNuggetToDiamond_t);
-			executeTrade(Market.diamondToRawGold_t);
+			executeTrade(Market.rawGoldToDiamond_t);
+			executeTrade(Market.diamondToGoldNugget_t);
+			executeTrade(Market.goldNuggetToEmerald_t);
+			executeTrade(Market.emeraldToRawGold_t);
 		});
 		thread.start();
 	}
