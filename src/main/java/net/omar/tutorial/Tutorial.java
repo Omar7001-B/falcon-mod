@@ -495,16 +495,12 @@ public class Tutorial implements ModInitializer {
 
 		LOGGER.info(firstPriceName + ": " + firstPriceCount);
 		LOGGER.info(secondPriceName + ": " + secondPriceCount);
+		LOGGER.info("Offer Index: " + offerIndex);
 
-		while (countItemInAllSlots(firstPriceName, 0) >= firstPriceCount && ((secondPriceCount == 0 || countItemInAllSlots(secondPriceName, 0) >= (secondPriceCount)) && (!getSlot(0).hasStack() || countEmptySlots(3) != 0))) {
-			if (firstPriceName.equals(secondPriceName) && firstPriceCount + secondPriceCount > countItemInAllSlots(firstPriceName, 0)) {
-				LOGGER.info("Broken");
-				break;
-			}
 			MinecraftClient.getInstance().player.networkHandler.sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
+			Sleep(500);
 			clickSlot(2);
-			Sleep(50);
-		}
+			Sleep(500);
 	}
 
 
@@ -523,10 +519,10 @@ public class Tutorial implements ModInitializer {
 	// Test function to send a signed message
 	private static void testFunction(String unused) {
 		Thread thread = new Thread(() -> {
-			executeTrade(Market.rawGoldToEmerald_t);
+			//executeTrade(Market.rawGoldToEmerald_t);
 			executeTrade(Market.emeraldToGoldNugget_t);
-			executeTrade(Market.goldNuggetToDiamond_t);
-			executeTrade(Market.diamondToRawGold_t);
+			//executeTrade(Market.goldNuggetToDiamond_t);
+			//executeTrade(Market.diamondToRawGold_t);
 		});
 		thread.start();
 	}
