@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TreeNode {
-    private String name;
+    public String name;
     private TreeNode parent;
     private List<TreeNode> children = new ArrayList<>();
     private List<Trade> trades = new ArrayList<>();
