@@ -135,8 +135,10 @@ public class Tutorial implements ModInitializer {
     }
 
     // ----------------------------- Shop Functions -----------------------------
-    public static int SCREENS_DELAY = 500;
+    public static int SCREENS_DELAY = 100;
+    public static int MAX_SCREEN_DELAY = 5000;
     public static int TRADE_DELAY = 100;
+    public static int MAX_TRADE_DELAY = 3000;
 
     public static void Sleep(int millis) {
         try {
@@ -148,22 +150,13 @@ public class Tutorial implements ModInitializer {
 
 
     // -----------------------------  Screens Functions -----------------------------
-    public static void waitForScreenChange(int maxDelay) {
+    public static void waitForScreenChange() {
         String oldScreen = currentScreenString;
-        while (oldScreen == currentScreenString && maxDelay > 0) {
-            currentScreenString = client.currentScreen == null ? "null" : client.currentScreen.toString();
+        for(int i = 0; i < SCREENS_DELAY; i+=SCREENS_DELAY){
             Sleep(SCREENS_DELAY);
-            maxDelay -= SCREENS_DELAY;
+            if (!oldScreen.equals(currentScreenString)) break;
+            currentScreenString = client.currentScreen == null ? "null" : client.currentScreen.toString();
         }
-    }
-
-    public static void watchCurrentScreen() {
-        MinecraftClient.getInstance().execute(() -> {
-            if (MinecraftClient.getInstance().currentScreen != null) {
-                LOGGER.info("Current Open Screen is: " + MinecraftClient.getInstance().currentScreen.toString());
-                DEBUG.Screens("Current Open Screen is: " + MinecraftClient.getInstance().currentScreen.toString());
-            }
-        });
     }
 
     public static void closeScreen() {
@@ -204,13 +197,7 @@ public class Tutorial implements ModInitializer {
 
 
     // ----------------------------- Trades -----------------------------
-    public static void ShowOffer(TradeOffer offer) {
-        DEBUG.Shop("First Item: " + offer.getOriginalFirstBuyItem().getName().getString() + " x " + offer.getOriginalFirstBuyItem().getCount());
-        DEBUG.Shop("Second Item: " + offer.getSecondBuyItem().getName().getString() + " x " + offer.getSecondBuyItem().getCount());
-        DEBUG.Shop("Result: " + offer.getSellItem().getName().getString() + " x " + offer.getSellItem().getCount());
-    }
-
-    public static boolean canTrade(String firstItem, int firstItemAmount, String secondItem, int secondItemAmount){
+    public static int numberOfTradeClicks(String firstItem, int firstItemAmount, String secondItem, int secondItemAmount){
         int firstItemAccumalated = 0;
         int secondItemAccumalated = 0;
         int slotsSize = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots.size();
@@ -220,23 +207,24 @@ public class Tutorial implements ModInitializer {
             if (slot.getStack().getName().getString().equals(secondItem)) secondItemAccumalated += slot.getStack().getCount();
 
         }
-        //DEBUG.Shop("First Item Accumulated: " + firstItemAccumalated  + ", Second Item Accumulated: " + secondItemAccumalated);
-        return firstItemAccumalated >= firstItemAmount && secondItemAccumalated >= secondItemAmount;
+        return Math.min(firstItemAccumalated/firstItemAmount, secondItemAmount != 0 ? secondItemAccumalated/secondItemAmount : 99999);
     }
 
     public static void makeTrade(int offerIndex) {
-        DEBUG.Shop("Current Screen in makeTrade function: " + client.currentScreen.toString());
-        if (!(client.currentScreen instanceof MerchantScreen)) return;
+        for(int i = 0; i < MAX_SCREEN_DELAY; i+=SCREENS_DELAY){
+            if (client.currentScreen instanceof MerchantScreen) break;
+            Sleep(SCREENS_DELAY);
+        }
+        if(!(client.currentScreen instanceof MerchantScreen)) return;
         TradeOffer offer = ((MerchantScreen) client.currentScreen).getScreenHandler().getRecipes().get(offerIndex);
-        ShowOffer(offer);
-        while(canTrade(offer.getOriginalFirstBuyItem().getName().getString(), offer.getOriginalFirstBuyItem().getCount(), offer.getSecondBuyItem().getName().getString(), offer.getSecondBuyItem().getCount())){
+        int numberOfTrades = numberOfTradeClicks(offer.getOriginalFirstBuyItem().getName().getString(), offer.getOriginalFirstBuyItem().getCount(),
+                offer.getSecondBuyItem().getName().getString(), offer.getSecondBuyItem().getCount());
+        for(int i = 0; i < numberOfTrades; i++){
             client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-            int maxDelay = 5000;
-            do {
+            for(int j = 0; j < MAX_TRADE_DELAY; j+=TRADE_DELAY){
+                if (getSlot(0).hasStack()) break;
                 Sleep(TRADE_DELAY);
-                maxDelay -= TRADE_DELAY;
             }
-            while (!getSlot(0).hasStack() && maxDelay > 0);
             clickSlot(2);
         }
     }
@@ -273,18 +261,18 @@ public class Tutorial implements ModInitializer {
         List<String> path = item.getPathFromRoot();
         DEBUG.Screens("Opening Shop");
         openShop();
-        waitForScreenChange(5000);
+        waitForScreenChange();
         DEBUG.Screens("Clicking Slot 1");
         clickSlot(searchSlots(path.get(1)));
-        waitForScreenChange(5000);
+        waitForScreenChange();
         DEBUG.Screens("Clicking Slot 2");
         clickSlot(searchSlots(path.get(2)));
-        waitForScreenChange(5000);
+        waitForScreenChange();
         DEBUG.Screens("Making Trade");
         makeTrade(item.TradeIndex - 1);
         DEBUG.Screens("Trade Completed");
         closeScreen();
-        waitForScreenChange(5000);
+        waitForScreenChange();
     }
 
     // Test function to send a signed message
