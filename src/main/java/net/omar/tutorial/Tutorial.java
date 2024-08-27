@@ -7,9 +7,8 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.WarningScreen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -19,22 +18,19 @@ import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.classes.DEBUG;
+import net.omar.tutorial.classes.InventoryIndexes;
 import net.omar.tutorial.classes.Market;
 import net.omar.tutorial.classes.Trade;
-import net.omar.tutorial.classes.TreeNode;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 
@@ -78,6 +74,11 @@ public class Tutorial implements ModInitializer {
             });
 
             DEBUG.LogScreenChange(client.currentScreen == null ? "null" : client.currentScreen.toString());
+            String screen = client.currentScreen == null ? "null" : client.currentScreen.toString();
+            if (!currentScreenString.equals(screen)) {
+                LOGGER.info("Screen : " + "[" + currentScreenString + "] -> [" + screen + "]");
+                currentScreenString = screen;
+            }
         });
     }
 
@@ -136,9 +137,13 @@ public class Tutorial implements ModInitializer {
 
     // ----------------------------- Shop Functions -----------------------------
     public static int SCREENS_DELAY = 100;
-    public static int MAX_SCREEN_DELAY = 5000;
-    public static int TRADE_DELAY = 100;
-    public static int MAX_TRADE_DELAY = 3000;
+    public static int FREEZE_DELAY = 200;
+    public static int MAX_SCREEN_DELAY = 2000;
+
+    public static int SLOT_DELAY = 100;
+    public static int MAX_SLOT_DELAY = 2000;
+
+    public static int TRADE_DELAY = 0;
 
     public static void Sleep(int millis) {
         try {
@@ -152,11 +157,12 @@ public class Tutorial implements ModInitializer {
     // -----------------------------  Screens Functions -----------------------------
     public static void waitForScreenChange() {
         String oldScreen = currentScreenString;
-        for(int i = 0; i < SCREENS_DELAY; i+=SCREENS_DELAY){
+        for(int i = 0; i < MAX_SCREEN_DELAY; i+=SCREENS_DELAY){
             Sleep(SCREENS_DELAY);
-            if (!oldScreen.equals(currentScreenString)) break;
             currentScreenString = client.currentScreen == null ? "null" : client.currentScreen.toString();
+            if (!oldScreen.equals(currentScreenString)) break;
         }
+        Sleep(FREEZE_DELAY);
     }
 
     public static void closeScreen() {
@@ -176,11 +182,8 @@ public class Tutorial implements ModInitializer {
         if (client.currentScreen == null) return -1;
         MinecraftClient client = MinecraftClient.getInstance();
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
-        int index = 0;
-        for (var val : slots) {
-            if (name.equals(val.getStack().getName().getString())) return index;
-            index++;
-        }
+        for (int i = 0; i < slots.size(); i++)
+            if (slots.get(i).getStack().getName().getString().contains(name)) return i;
         return -1;
     }
 
@@ -221,11 +224,12 @@ public class Tutorial implements ModInitializer {
                 offer.getSecondBuyItem().getName().getString(), offer.getSecondBuyItem().getCount());
         for(int i = 0; i < numberOfTrades; i++){
             client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-            for(int j = 0; j < MAX_TRADE_DELAY; j+=TRADE_DELAY){
+            for(int j = 0; j < MAX_SLOT_DELAY; j+= SLOT_DELAY){
                 if (getSlot(0).hasStack()) break;
-                Sleep(TRADE_DELAY);
+                Sleep(SLOT_DELAY);
             }
             clickSlot(2);
+            Sleep(TRADE_DELAY);
         }
     }
 
@@ -252,6 +256,10 @@ public class Tutorial implements ModInitializer {
         sendCommand("shop");
     }
 
+    private static void openInventory(String unused) {
+        MinecraftClient.getInstance().setScreen(new InventoryScreen(client.player));
+    }
+
     private static void openPV1(String unused) {
         sendCommand("pv 1");
     }
@@ -275,8 +283,29 @@ public class Tutorial implements ModInitializer {
         waitForScreenChange();
     }
 
+    public static void swapSlots(int slot1, int slot2) {
+        client.interactionManager.clickSlot(0, slot1, 0, SlotActionType.PICKUP, client.player); // Pick up item from slot1
+        client.interactionManager.clickSlot(0, slot2, 0, SlotActionType.PICKUP, client.player); // Place item into slot2
+        client.interactionManager.clickSlot(0, slot1, 0, SlotActionType.PICKUP, client.player); // Place item into slot1
+    }
+
+    public static void openShulkerBox(String name) {
+        openInventory("");
+        int slot = searchSlots(name);
+        LOGGER.info("Found " + name + " at slot " + slot);
+        if (slot == -1) return;
+        swapSlots(InventoryIndexes.HOTBAR_INDEXES.get(client.player.getInventory().selectedSlot), slot);
+        LOGGER.info("Swapped index 0 with " + " with slot " + slot);
+        closeScreen();
+        client.interactionManager.interactItem(client.player, Hand.MAIN_HAND);
+    }
+
     // Test function to send a signed message
     private static void testFunction(String unused) {
+        openShulkerBox("Shulker");
+        //printAllSlots();
+        if(true) return;
+
         Thread thread = new Thread(() -> {
             executeTrade(Market.rawGoldToDiamond_t);
             executeTrade(Market.diamondToGoldNugget_t);
@@ -285,4 +314,22 @@ public class Tutorial implements ModInitializer {
         });
         thread.start();
     }
+
+
+    public static void printAllSlots(){
+        HandledScreen<?> screen = (HandledScreen<?>) client.currentScreen;
+        if(screen == null) return;
+        DefaultedList<Slot> slots = screen.getScreenHandler().slots;
+        if(slots == null)  return;
+        LOGGER.info("-------------------");
+        for(int i = 0; i < slots.size(); i++){
+            if(slots.get(i) != null) {
+                LOGGER.info(""+i+": "+slots.get(i).getStack().getName().getString());
+            }
+        }
+        LOGGER.info("-------------------");
+    }
+
 }
+
+
