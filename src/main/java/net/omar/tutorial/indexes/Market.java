@@ -1,7 +1,7 @@
-package net.omar.tutorial.classes;
+package net.omar.tutorial.indexes;
 
-import java.util.Arrays;
-import java.util.List;
+import net.omar.tutorial.classes.Trade;
+import net.omar.tutorial.classes.TreeNode;
 
 public class Market {
     public static TreeNode SHOP = new TreeNode("Root");

@@ -1,4 +1,4 @@
-package net.omar.tutorial.classes;
+package net.omar.tutorial.indexes;
 
 import java.util.List;
 
