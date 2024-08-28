@@ -28,7 +28,7 @@ public class ExampleMixin {
 		if (packet instanceof ClickSlotC2SPacket) {
 			ClickSlotC2SPacket clickPacket = (ClickSlotC2SPacket) packet;
 			Int2ObjectMap<ItemStack> x = clickPacket.getModifiedStacks();
-			LOGGER.info("ClickSlotC2SPacket - Sync ID: {}, Slot: {}, Button: {}", clickPacket.getSyncId(), clickPacket.getSlot(), clickPacket.getButton());
+			LOGGER.info("ClickSlotC2SPacket - Sync ID: {}, Slot: {}, Button: {}, SlotActionType: {}, getStack: {} ", clickPacket.getSyncId(), clickPacket.getSlot(), clickPacket.getButton(), clickPacket.getActionType(), clickPacket.getStack());
 		} else if (packet instanceof ButtonClickC2SPacket) {
 			ButtonClickC2SPacket buttonPacket = (ButtonClickC2SPacket) packet;
 			LOGGER.info("ButtonClickC2SPacket - Sync ID: {}, Button ID: {}", buttonPacket.getSyncId(), buttonPacket.getButtonId());
