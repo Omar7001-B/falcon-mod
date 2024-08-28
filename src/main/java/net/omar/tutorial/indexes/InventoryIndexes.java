@@ -4,8 +4,6 @@ import java.util.List;
 
 public class InventoryIndexes {
 
-    // Hotbar indexes
-    public static final List<Integer> HOTBAR_INDEXES = List.of(36, 37, 38, 39, 40, 41, 42, 43, 44);
 
     // Offhand slot index
     public static final int OFFHAND_SLOT = 45;
@@ -17,6 +15,17 @@ public class InventoryIndexes {
     public static final List<Integer> MAIN_INVENTORY_INDEXES = List.of(
             9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
             28, 29, 30, 31, 32, 33, 34, 35
+    );
+
+    // Hotbar indexes
+    public static final List<Integer> HOTBAR_INDEXES = List.of(36, 37, 38, 39, 40, 41, 42, 43, 44);
+
+    // Total inventory indexes
+    public static final List<Integer> TOTAL_INVENTORY_INDEXES = List.of(
+            9, 10, 11, 12, 13, 14, 15, 16, 17,
+            18, 19, 20, 21, 22, 23, 24, 25, 26,
+            27, 28, 29, 30, 31, 32, 33, 34, 35,
+            36, 37, 38, 39, 40, 41, 42, 43, 44
     );
 
     // Utility method to check if an index is in the hotbar range
