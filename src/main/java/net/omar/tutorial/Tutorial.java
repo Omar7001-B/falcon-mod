@@ -18,13 +18,15 @@ import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
+import net.omar.tutorial.Inventory.SlotClicker;
+import net.omar.tutorial.Inventory.SlotOperations;
 import net.omar.tutorial.classes.DEBUG;
-import net.omar.tutorial.classes.InventoryIndexes;
-import net.omar.tutorial.classes.Market;
 import net.omar.tutorial.classes.Trade;
+import net.omar.tutorial.indexes.InventoryIndexes;
+import net.omar.tutorial.indexes.Market;
+import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,20 +68,6 @@ public class Tutorial implements ModInitializer {
         // make capslock keybinding
         registerKeyBinding("Testing Function", "Debug", GLFW.GLFW_KEY_Z, Tutorial::testFunction);
 
-        // Register tick event to listen for key presses
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // Log the key presses
-            keyBindings.forEach((keyBinding, action) -> {
-                if (keyBinding.wasPressed()) action.accept("");
-            });
-
-            DEBUG.LogScreenChange(client.currentScreen == null ? "null" : client.currentScreen.toString());
-            String screen = client.currentScreen == null ? "null" : client.currentScreen.toString();
-            if (!currentScreenString.equals(screen)) {
-                LOGGER.info("Screen : " + "[" + currentScreenString + "] -> [" + screen + "]");
-                currentScreenString = screen;
-            }
-        });
     }
 
     // ----------------------------- Custom Chat Commands -----------------------------
@@ -126,12 +114,31 @@ public class Tutorial implements ModInitializer {
         ClientReceiveMessageEvents.CHAT.register(this::onChatMessageReceived);
     }
 
+    // make function to watch end client tick
+    public void watchEndClientTick() {
+        // Register tick event to listen for key presses
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            // Log the key presses
+            keyBindings.forEach((keyBinding, action) -> {
+                if (keyBinding.wasPressed()) action.accept("");
+            });
+
+            DEBUG.LogScreenChange(client.currentScreen == null ? "null" : client.currentScreen.toString());
+            String screen = client.currentScreen == null ? "null" : client.currentScreen.toString();
+            if (!currentScreenString.equals(screen)) {
+                LOGGER.info("Screen : " + "[" + currentScreenString + "] -> [" + screen + "]");
+                currentScreenString = screen;
+            }
+        });
+    }
+
     @Override
     public void onInitialize() {
 
         loadChatEvents();
         loadAllKeyBinds();
         loadAllCustomCommands();
+        watchEndClientTick();
 
     }
 
@@ -171,17 +178,18 @@ public class Tutorial implements ModInitializer {
                 MinecraftClient.getInstance().currentScreen.close();
             }
         });
+        waitForScreenChange();
     }
 
     // ----------------------------- Clicks and Slots -----------------------------
-    public static Slot getSlot(int index) {
+    public static Slot getSlotByIndex(int index) {
         return ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots.get(index);
     }
 
-    public static int searchSlots(String name) {
+    public static int getIndexOfItemName(String name) {
         if (client.currentScreen == null) return -1;
-        MinecraftClient client = MinecraftClient.getInstance();
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if(slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
             if (slots.get(i).getStack().getName().getString().contains(name)) return i;
         return -1;
@@ -193,7 +201,7 @@ public class Tutorial implements ModInitializer {
                 ((HandledScreen<?>) client.currentScreen).getScreenHandler().syncId,
                 slotIndex,
                 0,
-                SlotActionType.QUICK_MOVE,
+                SlotActionType.PICKUP,
                 client.player
         );
     }
@@ -201,11 +209,12 @@ public class Tutorial implements ModInitializer {
 
     // ----------------------------- Trades -----------------------------
     public static int numberOfTradeClicks(String firstItem, int firstItemAmount, String secondItem, int secondItemAmount){
+        if(!(client.currentScreen instanceof MerchantScreen)) return 0;
         int firstItemAccumalated = 0;
         int secondItemAccumalated = 0;
         int slotsSize = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots.size();
         for (int i = 0; i < slotsSize; i++) {
-            Slot slot = getSlot(i);
+            Slot slot = getSlotByIndex(i);
             if (slot.getStack().getName().getString().equals(firstItem)) firstItemAccumalated += slot.getStack().getCount();
             if (slot.getStack().getName().getString().equals(secondItem)) secondItemAccumalated += slot.getStack().getCount();
 
@@ -225,20 +234,22 @@ public class Tutorial implements ModInitializer {
         for(int i = 0; i < numberOfTrades; i++){
             client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
             for(int j = 0; j < MAX_SLOT_DELAY; j+= SLOT_DELAY){
-                if (getSlot(0).hasStack()) break;
+                if (getSlotByIndex(0).hasStack()) break;
                 Sleep(SLOT_DELAY);
             }
-            clickSlot(2);
+            SlotClicker.slotShiftLeftClick(2);
             Sleep(TRADE_DELAY);
         }
     }
 
     // ----------------------------- Helper Functions -----------------------------
     private static void sendCommand(String command) {
+        if(client.player == null) return;
         client.player.networkHandler.sendChatCommand(command);
     }
 
     private static void sendChatMessage(String message) {
+        if(client.player == null) return;
         client.player.networkHandler.sendChatMessage(message);
     }
 
@@ -254,36 +265,37 @@ public class Tutorial implements ModInitializer {
 
     private static void openShop(String unused) {
         sendCommand("shop");
+        waitForScreenChange();
     }
 
     private static void openInventory(String unused) {
-        MinecraftClient.getInstance().setScreen(new InventoryScreen(client.player));
+        if(client.player == null) return;
+        MinecraftClient.getInstance().execute(() -> {
+            MinecraftClient.getInstance().setScreen(new InventoryScreen(client.player));
+        });
+        waitForScreenChange();
     }
 
     private static void openPV1(String unused) {
         sendCommand("pv 1");
+        waitForScreenChange();
     }
 
     // BuyItem
     private static void executeTrade(Trade item) {
         List<String> path = item.getPathFromRoot();
-        DEBUG.Screens("Opening Shop");
         openShop();
+        SlotClicker.slotNormalClick(getIndexOfItemName(path.get(1)));
         waitForScreenChange();
-        DEBUG.Screens("Clicking Slot 1");
-        clickSlot(searchSlots(path.get(1)));
+        SlotClicker.slotNormalClick(getIndexOfItemName(path.get(2)));
         waitForScreenChange();
-        DEBUG.Screens("Clicking Slot 2");
-        clickSlot(searchSlots(path.get(2)));
-        waitForScreenChange();
-        DEBUG.Screens("Making Trade");
         makeTrade(item.TradeIndex - 1);
-        DEBUG.Screens("Trade Completed");
         closeScreen();
-        waitForScreenChange();
     }
 
     public static void swapSlots(int slot1, int slot2) {
+        if(slot1 == slot2) return;
+        if(client.currentScreen == null) return;
         client.interactionManager.clickSlot(0, slot1, 0, SlotActionType.PICKUP, client.player); // Pick up item from slot1
         client.interactionManager.clickSlot(0, slot2, 0, SlotActionType.PICKUP, client.player); // Place item into slot2
         client.interactionManager.clickSlot(0, slot1, 0, SlotActionType.PICKUP, client.player); // Place item into slot1
@@ -291,26 +303,119 @@ public class Tutorial implements ModInitializer {
 
     public static void openShulkerBox(String name) {
         openInventory("");
-        int slot = searchSlots(name);
+        SlotOperations.showAllSlots(InventoryIndexes.TOTAL_INVENTORY_INDEXES);
+        Sleep(1000);
+        int slot = SlotOperations.getSlotIndexByName(name);
         LOGGER.info("Found " + name + " at slot " + slot);
         if (slot == -1) return;
-        swapSlots(InventoryIndexes.HOTBAR_INDEXES.get(client.player.getInventory().selectedSlot), slot);
-        LOGGER.info("Swapped index 0 with " + " with slot " + slot);
-        closeScreen();
-        client.interactionManager.interactItem(client.player, Hand.MAIN_HAND);
+        SlotClicker.slotRightClick(slot);
+        waitForScreenChange();
     }
 
-    // Test function to send a signed message
-    private static void testFunction(String unused) {
-        openShulkerBox("Shulker");
-        //printAllSlots();
+    public static void takeElementsFromShulker(String name, int amount, String shulkerName) {
+        openShulkerBox(shulkerName);
+        Sleep(1000);
+
+        SlotOperations.sendAmountFromSourceToTarget(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, name, amount);
         if(true) return;
 
-        Thread thread = new Thread(() -> {
+        int slot = getIndexOfItemName(name);
+
+        // count number of elements in this slot
+        int elementsInSlot = getSlotByIndex(slot).getStack().getCount();
+
+        LOGGER.info("Found " + name + " at slot " + slot);
+        if (slot == -1) return;
+
+        SlotClicker.slotPickAll(slot);
+
+        Sleep(1000);
+
+        // Get an empty slot in the inventory
+        int emptySlot = -1;
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        for (int indx : ShulkerInventoryIndexes.MAIN_INVENTORY_INDEXES) {
+            if (slots.get(indx).getStack().isEmpty()) {
+                emptySlot = indx;
+                break;
+            }
+        }
+
+        if (emptySlot == -1) {
+            LOGGER.info("No empty slot found.");
+            return;
+        }
+
+        LOGGER.info("Found empty slot at " + emptySlot);
+
+
+        // Right-click (mouse button 1) on the empty slot the specified number of times
+        for (int i = 0; i < amount; i++) {
+            SlotClicker.slotRightClick(emptySlot);
+            Sleep(50); // Optional: Add a slight delay between clicks
+        }
+
+        // Place the remaining items back into the original slot (if any are left)
+        SlotClicker.slotRightClick(slot);
+
+        LOGGER.info("Moved " + amount + " " + name + " to slot " + emptySlot);
+    }
+
+    public static void farmRawGold(){
+        for(int  i = 0; i < 10; i++){
+            openShulkerBox("Shulker");
+            Sleep(1000);
+            SlotOperations.takeItem("Raw Gold", 85, "Shulker");
+            Sleep(1000);
+            closeScreen();
+
             executeTrade(Market.rawGoldToDiamond_t);
             executeTrade(Market.diamondToGoldNugget_t);
             executeTrade(Market.goldNuggetToEmerald_t);
             executeTrade(Market.emeraldToRawGold_t);
+
+            openShulkerBox("Shulker");
+            Sleep(1000);
+            SlotOperations.sendItem("Raw Gold", 64, "Shulker");
+            Sleep(1000);
+            closeScreen();
+        }
+    }
+
+    // Test function to send a signed message
+    private static void testFunction(String unused) {
+        //openShulkerBox("Shulker");
+        //Sleep(2000);
+        //printAllSlots();
+        //if(true) return;
+
+        Thread thread = new Thread(() -> {
+//            openShulkerBox("Shulker");
+//            Sleep(1000);
+//            SlotOperations.takeItem("Raw Gold", 85, "Shulker");
+//            Sleep(1000);
+//            closeScreen();
+             farmRawGold();
+
+            //openShulkerBox("Shulker");
+            //waitForScreenChange();
+            //SlotOperations.takeItem("Raw Gold", 1000, "Shulker");
+            //SlotOperations.sendItem("Raw Gold", 1000, "Shulker");
+
+            //takeElementsFromShulker("Raw Gold", 1000, "Shulker");
+            //openInventory("");
+            //waitForScreenChange();
+            //SlotOperations.showAllSlots(InventoryIndexes.TOTAL_INVENTORY_INDEXES);
+            //openShulkerBox("Shulker");
+            //Sleep(2000);
+            //openPV1("");
+            //Sleep(2000);
+            //printAllSlots();
+            //if(true) return;
+            //executeTrade(Market.rawGoldToDiamond_t);
+            //executeTrade(Market.diamondToGoldNugget_t);
+            //executeTrade(Market.goldNuggetToEmerald_t);
+            //executeTrade(Market.emeraldToRawGold_t);
         });
         thread.start();
     }
