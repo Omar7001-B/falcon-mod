@@ -153,3 +153,19 @@ private static DefaultedList<Slot> getCurrentScreenSlots() {
         return count;
     }
  */
+/*
+public static void printAllSlots(){
+    HandledScreen<?> screen = (HandledScreen<?>) client.currentScreen;
+    if(screen == null) return;
+    DefaultedList<Slot> slots = screen.getScreenHandler().slots;
+    if(slots == null)  return;
+    LOGGER.info("-------------------");
+    for(int i = 0; i < slots.size(); i++){
+        if(slots.get(i) != null) {
+            LOGGER.info(""+i+": "+slots.get(i).getStack().getName().getString());
+        }
+    }
+    LOGGER.info("-------------------");
+}
+
+ */
