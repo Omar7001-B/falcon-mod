@@ -6,7 +6,7 @@ import net.minecraft.screen.slot.SlotActionType;
 
 public class SlotClicker {
 
-    public static int SLOT_CLICK_DELAY = 100;
+    public static int SLOT_CLICK_DELAY = 50;
 
     private static void Sleep(int ms) {
         try {

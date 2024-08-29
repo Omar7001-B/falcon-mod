@@ -2,14 +2,18 @@ package net.omar.tutorial.Inventory;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.indexes.PVInventoryIndexes;
 import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static net.omar.tutorial.Tutorial.MOD_ID;
 
@@ -33,19 +37,50 @@ public class SlotOperations {
 
     public static void showAllSlots(List<Integer> indexes) {
         DefaultedList<Slot> slots = getSlots();
-        LOGGER.info("Showing slots:");
         if (slots == null) {
             LOGGER.info("No slots found");
             return;
         }
 
-        for (int index : indexes) {
+        if (indexes == null || indexes.isEmpty()) {
+            indexes = IntStream.range(0, slots.size()).boxed().collect(Collectors.toList());
+        }
+
+        LOGGER.info("Showing slots:");
+        indexes.forEach(index -> {
             Slot slot = slots.get(index);
             LOGGER.info("Slot Index: " + index);
             LOGGER.info("Item: " + (slot.hasStack() ? slot.getStack().getItem().getName().getString() : "Empty"));
             LOGGER.info("Amount: " + (slot.hasStack() ? slot.getStack().getCount() : 0));
             LOGGER.info("-------------------");
+        });
+
+    }
+
+    public static void showAllTrades(){
+        List<TradeOffer> offers = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().getRecipes();
+        for(int i = 0; i < offers.size(); i++){
+            TradeOffer offer = offers.get(i);
+
+            // Get the first buy item details
+            int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
+            String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
+
+            // Get the second buy item details (if present)
+            int secondPriceCount = offer.getSecondBuyItem().isEmpty() ? 0 : offer.getSecondBuyItem().getCount();
+            String secondPriceName = offer.getSecondBuyItem().isEmpty() ? "None" : offer.getSecondBuyItem().getName().getString();
+
+            // Get the sell (output) item details
+            int sellCount = offer.getSellItem().getCount();
+            String sellName = offer.getSellItem().getName().getString();
+
+            LOGGER.info("Trade " + (i + 1) + ":");
+            LOGGER.info("    First Item: " + firstPriceCount + " x " + firstPriceName);
+            LOGGER.info("    Second Item: " + (secondPriceCount > 0 ? secondPriceCount + " x " + secondPriceName : "None"));
+            LOGGER.info("    Result: " + sellCount + " x " + sellName);
+            LOGGER.info("------------------------------------");
         }
+
     }
 
     public static int getSlotIndexByName(String itemName) {
@@ -68,13 +103,19 @@ public class SlotOperations {
         return slots != null && slots.get(index).hasStack() ? slots.get(index).getStack().getCount() : 0;
     }
 
-    public static int countTotalElementAmount(List<Integer> indexes) {
+    public static int countTotalElementAmount(List<Integer> indexes, String itemName) {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return 0;
 
         return indexes.stream()
-                .mapToInt(index -> slots.get(index).hasStack() ? slots.get(index).getStack().getCount() : 0)
+                .filter(index -> slots.get(index).hasStack() && containsIgnoreCase(slots.get(index).getStack().getItem().getName().getString(), itemName))
+                .mapToInt(index -> slots.get(index).getStack().getCount())
                 .sum();
+    }
+
+    public static boolean isEmptySlot(int index) {
+        DefaultedList<Slot> slots = getSlots();
+        return slots != null && !slots.get(index).hasStack();
     }
 
     public static int getFirstEmptySlot(List<Integer> indexes) {
@@ -82,9 +123,9 @@ public class SlotOperations {
         if (slots == null) return -1;
 
         return indexes.stream()
-                .filter(index -> !slots.get(index).hasStack())
+                .filter(SlotOperations::isEmptySlot)
                 .findFirst()
-                .orElse(-1); // No empty slot found
+                .orElse(-1);
     }
 
     public static int countEmptySlots(List<Integer> indexes) {
@@ -92,7 +133,7 @@ public class SlotOperations {
         if (slots == null) return 0;
 
         return (int) indexes.stream()
-                .filter(index -> !slots.get(index).hasStack())
+                .filter(SlotOperations::isEmptySlot)
                 .count();
     }
 
