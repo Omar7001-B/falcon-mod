@@ -55,4 +55,14 @@ public class DEBUG {
             LOGGER.warn("Failed to write to file: " + e.getMessage());
         }
     }
+
+    public static void Store(String message) {
+        if(DISALBE) return;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Store.txt", true))) {
+            writer.write(message);
+            writer.newLine();
+        } catch (IOException e) {
+            LOGGER.warn("Failed to write to file: " + e.getMessage());
+        }
+    }
 }
