@@ -1,6 +1,7 @@
 package net.omar.tutorial;
 
 import com.mojang.authlib.GameProfile;
+import com.sun.jna.WString;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -26,6 +27,7 @@ import net.omar.tutorial.Inventory.SlotClicker;
 import net.omar.tutorial.Inventory.SlotOperations;
 import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.classes.Trade;
+import net.omar.tutorial.classes.TreeNode;
 import net.omar.tutorial.indexes.InventoryIndexes;
 import net.omar.tutorial.indexes.Market;
 import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
@@ -36,6 +38,7 @@ import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -67,7 +70,105 @@ public class Tutorial implements ModInitializer {
 
     public void loadAllKeyPressBinds() {
         registerKeyPressBinding(GLFW.GLFW_KEY_X, (String s) -> SlotOperations.showAllSlots(null));
-        registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> LOGGER.info("Y key pressed"));
+        registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> {LOGGER.info("Y key pressed"); showMaterialNeeded(Market.armors_P1);showMaterialNeeded(Market.swords_P1);showMaterialNeeded(Market.pickaxes_P1);showMaterialNeeded(Market.axes_P1);});
+    }
+
+    public static String calculateInputNeeded(int targetOutput, List<Trade> tradePath) {
+        int currentOutput = 0;
+        int initialInput = 0;
+        Map<String, Integer> materialMap = new HashMap<>();
+
+        while (currentOutput < targetOutput) {
+            initialInput += tradePath.get(0).firstItemAmount;
+            int inputAmount = initialInput;
+            materialMap.clear();
+
+            for (int i = 0; i < tradePath.size(); i++) {
+                Trade currentTrade = tradePath.get(i);
+                int inputNeeded = currentTrade.firstItemAmount + currentTrade.secondItemAmount;
+                int outputAmount = currentTrade.resultAmount;
+                int tradeMultiplier = inputAmount / inputNeeded;
+
+                materialMap.put(currentTrade.firstItemName, inputAmount % inputNeeded);
+                inputAmount = tradeMultiplier * outputAmount;
+            }
+
+            currentOutput = inputAmount;
+        }
+
+        StringBuilder result = new StringBuilder();
+        result.append("Input: ").append(initialInput).append(" -> ");
+
+        for (Trade trade : tradePath) {
+            result.append(trade.firstItemAmount).append(" x ").append(trade.firstItemName)
+                    .append(" -> ").append(trade.resultAmount).append(" x ").append(trade.resultName).append(" -> ");
+        }
+
+        result.append("Output: ").append(currentOutput).append(" x ")
+                .append(tradePath.get(tradePath.size() - 1).resultName).append("\n");
+
+        result.append("Remaining Materials: [");
+
+        for (Map.Entry<String, Integer> entry : materialMap.entrySet()) {
+            result.append(entry.getValue()).append(" x ").append(entry.getKey()).append(", ");
+        }
+
+        if (!materialMap.isEmpty()) {
+            result.setLength(result.length() - 2); // Remove the last comma and space
+        }
+
+        result.append("]");
+
+        return result.toString();
+    }
+
+    public static  void showMaterialNeeded(TreeNode item_p){
+        Map<String, Integer> materialNeeded = new HashMap<>();
+        // make queue
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.add(item_p);
+        while(!queue.isEmpty()){
+            TreeNode item = queue.poll();
+            if(item.children.size() > 0) {
+                for(TreeNode child : item.children) queue.add(child);
+            }
+            if(item.trades.size() > 0){
+                for(Trade trade : item.trades){
+                    //DEBUG.Shop("Trade: " + trade.TradeIndex + " " + trade.firstItemName + " x " + trade.firstItemAmount + " + " + trade.secondItemName + " x " + trade.secondItemAmount + " = " + trade.resultName + " x " + trade.resultAmount);
+
+                    materialNeeded.put(trade.firstItemName, materialNeeded.getOrDefault(trade.firstItemName, 0) + trade.firstItemAmount);
+
+                    /*
+                    if(trade.secondItemAmount != 0) {
+                        materialNeeded.put(trade.secondItemName, materialNeeded.getOrDefault(trade.secondItemName, 0) + trade.secondItemAmount);
+                    }
+                     */
+                }
+            }
+        }
+
+        DEBUG.Shop("Material Needed for full " + item_p.name);
+        for(Map.Entry<String, Integer> entry : materialNeeded.entrySet()){
+            DEBUG.Shop(entry.getValue() + " of " + entry.getKey());
+
+            if(SlotOperations.containsIgnoreCase(entry.getKey(), "raw")) {
+                //DEBUG.Shop(calculateInputNeeded(entry.getValue(), List.of()));
+            }
+            else if(SlotOperations.containsIgnoreCase(entry.getKey(), "nugget"))
+            {
+                DEBUG.Shop(calculateInputNeeded(entry.getValue(), List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldNugget_t)));
+            }
+            else if(SlotOperations.containsIgnoreCase(entry.getKey(), "block"))
+            {
+                DEBUG.Shop(calculateInputNeeded(entry.getValue(), List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldBlock_t)));
+            }
+            else if(SlotOperations.containsIgnoreCase(entry.getKey(), "ingot"))
+            {
+                DEBUG.Shop(calculateInputNeeded(entry.getValue(), List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldIngot_t)));
+            }
+        }
+        DEBUG.Shop("-----------------");
+
     }
 
 
@@ -339,10 +440,6 @@ public class Tutorial implements ModInitializer {
         sendChatMessage(randomMessage);
     }
 
-    private static void openShop() {
-        openShop("");
-    }
-
     private static void openShop(String unused) {
         sendCommand("shop");
         waitForScreenChange();
@@ -364,7 +461,7 @@ public class Tutorial implements ModInitializer {
     // BuyItem
     private static void executeTrade(Trade item, int clicks) {
         List<String> path = item.getPathFromRoot();
-        openShop();
+        openShop("");
         SlotClicker.slotNormalClick(getIndexOfItemName(path.get(1)));
         waitForScreenChange();
         SlotClicker.slotNormalClick(getIndexOfItemName(path.get(2)));
@@ -397,11 +494,12 @@ public class Tutorial implements ModInitializer {
 
 
 
-    public static void farmRawGold(){
-        for(int  i = 0; i < 999999; i++){
-            SlotOperations.takeItem("Raw Gold", 90, "Shulker");
-            if(LastShulker.emptySlots < 3) {
-                SlotOperations.sendItem("Shulker", 1, "pv");
+    public static void farmRawGold() {
+        for (int i = 0; i < 999999; i++) {
+            SlotOperations.takeItems(Map.of("Raw Gold", 90), "shulker");
+
+            if (LastShulker.emptySlots < 3) {
+                SlotOperations.sendItems(Map.of("Shulker", 1), "pv");
                 executeTrade(Market.rawgoldToBlackBox_t, 1);
             }
 
@@ -410,7 +508,7 @@ public class Tutorial implements ModInitializer {
             executeTrade(Market.goldNuggetToEmerald_t, 99999);
             executeTrade(Market.emeraldToRawGold_t, 99999);
 
-            SlotOperations.sendItem("Raw Gold", 1000, "Shulker");
+            SlotOperations.sendItems(Map.of("Raw Gold", 1000), "shulker");
         }
     }
 
