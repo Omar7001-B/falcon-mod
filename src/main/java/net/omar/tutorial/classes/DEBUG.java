@@ -7,7 +7,7 @@ import java.io.IOException;
 import static net.omar.tutorial.Tutorial.LOGGER;
 
 public class DEBUG {
-    private static boolean DISALBE = true;
+    private static final boolean DISALBE = true;
     private static String currentScreen;
     public static void Screens(String message) {
         if(DISALBE) return;
