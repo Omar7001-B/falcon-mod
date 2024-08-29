@@ -18,6 +18,7 @@ import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.Inventory.NameConverter;
@@ -29,6 +30,7 @@ import net.omar.tutorial.indexes.InventoryIndexes;
 import net.omar.tutorial.indexes.Market;
 import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
 import net.omar.tutorial.indexes.TradeInventoryIndexes;
+import net.omar.tutorial.last.LastShulker;
 import org.apache.commons.logging.Log;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -67,6 +69,8 @@ public class Tutorial implements ModInitializer {
         registerKeyPressBinding(GLFW.GLFW_KEY_X, (String s) -> SlotOperations.showAllSlots(null));
         registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> LOGGER.info("Y key pressed"));
     }
+
+
 
     public void loadAllCustomCommands() {
         registerCustomCommand("!random", Tutorial::sendRandomChatMessage);
@@ -126,12 +130,12 @@ public class Tutorial implements ModInitializer {
 
             // Log the current screen
             DEBUG.LogScreenChange(client.currentScreen == null ? "null" : client.currentScreen.toString());
-            //String screen = client.currentScreen == null ? "null" : client.currentScreen.toString();
-            //if (!currentScreenString.equals(screen)) {
-                //LOGGER.info("Screen : " + "[" + currentScreenString + "] -> [" + screen + "]");
-                //
-                //currentScreenString = screen;
-            //}
+            String screen = client.currentScreen == null ? "null" : client.currentScreen.toString();
+            if (!currentScreenString.equals(screen)) {
+                LOGGER.info("Screen : " + "[" + currentScreenString + "] -> [" + screen + "]");
+
+                currentScreenString = screen;
+            }
 
             // Log the key presses
 
@@ -298,17 +302,24 @@ public class Tutorial implements ModInitializer {
         return numberOfClicks;
     }
 
-    public static void makeTrade(int offerIndex) {
-        for(int i = 0; !(client.currentScreen instanceof MerchantScreen) && i < MAX_SCREEN_DELAY; i+=SCREENS_DELAY) Sleep(SCREENS_DELAY);
-        if(!(client.currentScreen instanceof MerchantScreen)) return;
-        TradeOffer offer = ((MerchantScreen) client.currentScreen).getScreenHandler().getRecipes().get(offerIndex);
-        int numberOfClicks = calcNumberOfClicks(offer);
-        for(int i = 0; i < numberOfClicks; i++){
-            client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-            for(int j = 0; SlotOperations.isEmptySlot(TradeInventoryIndexes.FIRST_ITEM_SLOT) && j < MAX_SLOT_DELAY; j+= SLOT_DELAY) Sleep(SLOT_DELAY);
-            SlotClicker.slotShiftLeftClick(TradeInventoryIndexes.RESULT_SLOT);
-            //Sleep(TRADE_DELAY);
-        }
+    public static void makeTrade(int offerIndex, int clicks) {
+
+            for (int i = 0; !(client.currentScreen instanceof MerchantScreen) && i < MAX_SCREEN_DELAY; i += SCREENS_DELAY)
+                Sleep(SCREENS_DELAY);
+            if (!(client.currentScreen instanceof MerchantScreen)) return;
+            TradeOffer offer = ((MerchantScreen) client.currentScreen).getScreenHandler().getRecipes().get(offerIndex);
+            int numberOfClicks = Math.min(clicks, calcNumberOfClicks(offer));
+            DEBUG.Shop("Making trade " + offerIndex + " with " + numberOfClicks + " clicks");
+            for (int i = 0; i < numberOfClicks; i++) {
+                client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
+                for (int j = 0; SlotOperations.isEmptySlot(TradeInventoryIndexes.FIRST_ITEM_SLOT) && j < MAX_SLOT_DELAY; j += SLOT_DELAY)
+                    Sleep(SLOT_DELAY);
+
+                if(clicks == 1) SlotClicker.slotNormalClick(TradeInventoryIndexes.RESULT_SLOT);
+                else SlotClicker.slotShiftLeftClick(TradeInventoryIndexes.RESULT_SLOT);
+                //Sleep(TRADE_DELAY);
+            }
+
     }
 
     // ----------------------------- Helper Functions -----------------------------
@@ -345,20 +356,20 @@ public class Tutorial implements ModInitializer {
         waitForScreenChange();
     }
 
-    private static void openPV1(String unused) {
+    public static void openPV1(String unused) {
         sendCommand("pv 1");
         waitForScreenChange();
     }
 
     // BuyItem
-    private static void executeTrade(Trade item) {
+    private static void executeTrade(Trade item, int clicks) {
         List<String> path = item.getPathFromRoot();
         openShop();
         SlotClicker.slotNormalClick(getIndexOfItemName(path.get(1)));
         waitForScreenChange();
         SlotClicker.slotNormalClick(getIndexOfItemName(path.get(2)));
         waitForScreenChange();
-        makeTrade(item.TradeIndex - 1);
+        makeTrade(item.TradeIndex - 1, clicks);
         closeScreen();
     }
 
@@ -378,71 +389,28 @@ public class Tutorial implements ModInitializer {
         if (slot == -1) return;
         SlotClicker.slotRightClick(slot);
         waitForScreenChange();
+
+        // Update the shulker data after opening the shulker box
+        // LastShulker.updateShulkerData();
+        // LastShulker.showShulkerData();
     }
 
-    public static void takeElementsFromShulker(String name, int amount, String shulkerName) {
-        openShulkerBox(shulkerName);
-        Sleep(1000);
 
-        SlotOperations.sendAmountFromSourceToTarget(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, name, amount);
-        if(true) return;
-
-        int slot = getIndexOfItemName(name);
-
-        // count number of elements in this slot
-        int elementsInSlot = getSlotByIndex(slot).getStack().getCount();
-
-        ////LOGGER.info("Found " + name + " at slot " + slot);
-        if (slot == -1) return;
-
-        SlotClicker.slotPickAll(slot);
-
-        Sleep(1000);
-
-        // Get an empty slot in the inventory
-        int emptySlot = -1;
-        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
-        for (int indx : ShulkerInventoryIndexes.MAIN_INVENTORY_INDEXES) {
-            if (slots.get(indx).getStack().isEmpty()) {
-                emptySlot = indx;
-                break;
-            }
-        }
-
-        if (emptySlot == -1) {
-            //LOGGER.info("No empty slot found.");
-            return;
-        }
-
-        //LOGGER.info("Found empty slot at " + emptySlot);
-
-
-        // Right-click (mouse button 1) on the empty slot the specified number of times
-        for (int i = 0; i < amount; i++) {
-            SlotClicker.slotRightClick(emptySlot);
-            Sleep(50); // Optional: Add a slight delay between clicks
-        }
-
-        // Place the remaining items back into the original slot (if any are left)
-        SlotClicker.slotRightClick(slot);
-
-        //LOGGER.info("Moved " + amount + " " + name + " to slot " + emptySlot);
-    }
 
     public static void farmRawGold(){
-        for(int  i = 0; i < 10; i++){
-            openShulkerBox("Shulker");
+        for(int  i = 0; i < 999999; i++){
             SlotOperations.takeItem("Raw Gold", 90, "Shulker");
-            closeScreen();
+            if(LastShulker.emptySlots < 3) {
+                SlotOperations.sendItem("Shulker", 1, "pv");
+                executeTrade(Market.rawgoldToBlackBox_t, 1);
+            }
 
-            executeTrade(Market.rawGoldToDiamond_t);
-            executeTrade(Market.diamondToGoldNugget_t);
-            executeTrade(Market.goldNuggetToEmerald_t);
-            executeTrade(Market.emeraldToRawGold_t);
+            executeTrade(Market.rawGoldToDiamond_t, 99999);
+            executeTrade(Market.diamondToGoldNugget_t, 99999);
+            executeTrade(Market.goldNuggetToEmerald_t, 99999);
+            executeTrade(Market.emeraldToRawGold_t, 99999);
 
-            openShulkerBox("Shulker");
             SlotOperations.sendItem("Raw Gold", 1000, "Shulker");
-            closeScreen();
         }
     }
 
@@ -458,7 +426,7 @@ private static void testFunction(String unused) {
             farmRawGold();
             // executeTrade(Market.rawGoldToDiamond_t);
             // executeTrade(Market.diamondToRawGold_t);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             Thread.currentThread().interrupt(); // Preserve the interrupted status
             LOGGER.info("Thread was interrupted during execution.");
         } finally {
