@@ -168,4 +168,14 @@ public static void printAllSlots(){
     LOGGER.info("-------------------");
 }
 
+    public static void clickSlot(int slotIndex) {
+        if (client.player == null || client.currentScreen == null) return;
+        client.interactionManager.clickSlot(
+                ((HandledScreen<?>) client.currentScreen).getScreenHandler().syncId,
+                slotIndex,
+                0,
+                SlotActionType.PICKUP,
+                client.player
+        );
+    }
  */

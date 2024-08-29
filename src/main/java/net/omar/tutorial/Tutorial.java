@@ -151,7 +151,11 @@ public class Tutorial implements ModInitializer {
 
 
             if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_ESCAPE)) {
-                LOGGER.info("ESC key pressed");
+                LOGGER.info("Escape key pressed");
+                if (thread != null && thread.isAlive()) {
+                    thread.interrupt();
+                    LOGGER.info("Thread interrupted");
+                }
             }
         });
     }
@@ -221,16 +225,6 @@ public class Tutorial implements ModInitializer {
         return -1;
     }
 
-    public static void clickSlot(int slotIndex) {
-        if (client.player == null || client.currentScreen == null) return;
-        client.interactionManager.clickSlot(
-                ((HandledScreen<?>) client.currentScreen).getScreenHandler().syncId,
-                slotIndex,
-                0,
-                SlotActionType.PICKUP,
-                client.player
-        );
-    }
 
 
     // ----------------------------- Trades -----------------------------
@@ -281,7 +275,7 @@ public class Tutorial implements ModInitializer {
                 totalInputWaste += inputWeHave;
                 totalOutputAmount += outPutWeGet;
 
-                if(totalInputWaste >= 64) {
+                while(totalInputWaste >= 64) {
                     totalInputWaste-= 64;
                     numberOfEmptySlots++;
                 }
@@ -436,11 +430,9 @@ public class Tutorial implements ModInitializer {
     }
 
     public static void farmRawGold(){
-        for(int  i = 0; i < 1; i++){
+        for(int  i = 0; i < 10; i++){
             openShulkerBox("Shulker");
-            Sleep(1000);
             SlotOperations.takeItem("Raw Gold", 90, "Shulker");
-            Sleep(1000);
             closeScreen();
 
             executeTrade(Market.rawGoldToDiamond_t);
@@ -449,22 +441,12 @@ public class Tutorial implements ModInitializer {
             executeTrade(Market.emeraldToRawGold_t);
 
             openShulkerBox("Shulker");
-            Sleep(1000);
             SlotOperations.sendItem("Raw Gold", 1000, "Shulker");
-            Sleep(1000);
             closeScreen();
         }
     }
 
     public static Thread thread;
-//    public static  Thread testFarm(){
-//        Thread thread = new Thread(() -> {
-//            farmRawGold();
-//        });
-//        thread.start();
-//        return thread;
-//    }
-//
 private static void testFunction(String unused) {
     if (thread != null && thread.isAlive()) {
         //LOGGER.info("A previous instance of the thread is still running.");
@@ -472,9 +454,16 @@ private static void testFunction(String unused) {
     }
 
     thread = new Thread(() -> {
-        farmRawGold();
-        //executeTrade(Market.rawGoldToDiamond_t);
-        //executeTrade(Market.diamondToRawGold_t);
+        try {
+            farmRawGold();
+            // executeTrade(Market.rawGoldToDiamond_t);
+            // executeTrade(Market.diamondToRawGold_t);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Preserve the interrupted status
+            LOGGER.info("Thread was interrupted during execution.");
+        } finally {
+            //LOGGER.info("Thread execution complete.");
+        }
     });
 
     thread.start();
