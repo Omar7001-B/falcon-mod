@@ -7,9 +7,9 @@ import java.util.List;
 
 public class TreeNode {
     public String name;
-    private TreeNode parent;
-    private List<TreeNode> children = new ArrayList<>();
-    private List<Trade> trades = new ArrayList<>();
+    public TreeNode parent;
+    public List<TreeNode> children = new ArrayList<>();
+    public List<Trade> trades = new ArrayList<>();
 
     public TreeNode(String name) {
         this.name = name;

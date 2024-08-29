@@ -6,16 +6,16 @@ import java.util.List;
 public class Trade {
     public int TradeIndex;
 
-    String firstItemName;
-    int firstItemAmount;
+    public String firstItemName;
+    public int firstItemAmount;
 
-    String secondItemName;
-    int secondItemAmount;
+    public String secondItemName;
+    public int secondItemAmount;
 
-    String resultName;
-    int resultAmount;
+    public String resultName;
+    public int resultAmount;
 
-    TreeNode Parent;
+    public TreeNode Parent;
 
 
     // Constructor with all item parameters
