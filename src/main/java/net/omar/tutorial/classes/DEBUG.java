@@ -1,23 +1,43 @@
 package net.omar.tutorial.classes;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
 import static net.omar.tutorial.Tutorial.LOGGER;
 
 public class DEBUG {
-    private static final boolean DISALBE = true;
+    private static final boolean DISALBE = false;
     private static String currentScreen;
-    public static void Screens(String message) {
+    public static final long MAX_FILE_SIZE = 1024 * 1024; // 1 MB limit
+
+    private static void writeToFile(String fileName, String message) {
         if(DISALBE) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Screens.txt", true))) {
-            writer.write(message);
-            writer.newLine();
+        File file = new File(fileName);
+
+        try {
+            if (file.length() > MAX_FILE_SIZE) {
+                // Delete the file if it exceeds the limit
+                if (!file.delete()) {
+                    LOGGER.warn("Failed to delete the file: " + fileName);
+                }
+            }
+
+            // Write the new message
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+                writer.write(message);
+                writer.newLine();
+            }
         } catch (IOException e) {
             LOGGER.warn("Failed to write to file: " + e.getMessage());
         }
     }
+
+    public static void Screens(String message) {
+        writeToFile("Screens.txt", message);
+    }
+
     public static void LogScreenChange(String newScreen) {
         if(DISALBE) return;
         if (!newScreen.equals(currentScreen)) {
@@ -27,42 +47,18 @@ public class DEBUG {
     }
 
     public static void Chat(String message) {
-        if(DISALBE) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Chat.txt", true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException e) {
-            LOGGER.warn("Failed to write to file: " + e.getMessage());
-        }
+        writeToFile("Chat.txt", message);
     }
 
     public static void Slots(String message) {
-        if(DISALBE) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Slots.txt", true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException e) {
-            LOGGER.warn("Failed to write to file: " + e.getMessage());
-        }
+        writeToFile("Slots.txt", message);
     }
 
     public static void Shop(String message) {
-        if(DISALBE) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Shop.txt", true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException e) {
-            LOGGER.warn("Failed to write to file: " + e.getMessage());
-        }
+        writeToFile("Shop.txt", message);
     }
 
     public static void Store(String message) {
-        if(DISALBE) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Store.txt", true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException e) {
-            LOGGER.warn("Failed to write to file: " + e.getMessage());
-        }
+        writeToFile("Store.txt", message);
     }
 }
