@@ -13,7 +13,7 @@ import net.omar.tutorial.last.LastShulker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -161,83 +161,110 @@ public class SlotOperations {
         }
     }
 
-    public static boolean sendAmountFromSourceToTarget(List<Integer> sourceIndexes, List<Integer> targetIndexes, String itemName, int amount) {
+    public static boolean transferItems(Map<String, Integer> itemAmounts, List<Integer> sourceIndexes, List<Integer> targetIndexes) {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return false;
 
+        Map<String, Integer> remainingAmounts = new HashMap<>(itemAmounts);
+
         for (int sourceIndex : sourceIndexes) {
             Slot sourceSlot = slots.get(sourceIndex);
-            if (sourceSlot.hasStack() && containsIgnoreCase(sourceSlot.getStack().getItem().getName().getString(), itemName)) {
-                int availableAmount = sourceSlot.getStack().getCount();
-                int toTransfer = Math.min(amount, availableAmount);
+            if (!sourceSlot.hasStack()) continue;
 
-                if(toTransfer == availableAmount) {
+            String itemName = sourceSlot.getStack().getItem().getName().getString();
+            for (Map.Entry<String, Integer> entry : remainingAmounts.entrySet()) {
+                if (entry.getValue() == 0 || !containsIgnoreCase(itemName, entry.getKey())) continue;
+
+                int toTransfer = Math.min(entry.getValue(), sourceSlot.getStack().getCount());
+                if (toTransfer == sourceSlot.getStack().getCount()) {
                     SlotClicker.slotShiftLeftClick(sourceIndex);
-                }
-                else {
+                } else {
                     SlotClicker.slotNormalClick(sourceIndex);
                     int targetIndex = getFirstEmptySlot(targetIndexes);
                     if (targetIndex == -1) return false;
-                    for(int i = 0; i < toTransfer; i++) {
-                        SlotClicker.slotRightClick(targetIndex);
-                    }
-                    SlotClicker.slotNormalClick(sourceIndex); // Return remaining items
+                    for (int i = 0; i < toTransfer; i++) SlotClicker.slotRightClick(targetIndex);
+                    SlotClicker.slotNormalClick(sourceIndex);
                 }
-                amount -= toTransfer;
-                if (amount <= 0) return true;
+
+                entry.setValue(entry.getValue() - toTransfer);
+                break;
             }
         }
-        return false;
+
+        return remainingAmounts.values().stream().allMatch(v -> v <= 0);
     }
 
-    public static boolean sendItem(String itemName, int amount, String targetContainer) {
+
+    public static boolean sendItems(Map<String, Integer> itemAmounts, String targetContainer) {
         boolean result = false;
-        if(containsIgnoreCase(targetContainer, "pv")) {
-            openPV1("");
-            result = sendAmountFromSourceToTarget(PVInventoryIndexes.TOTAL_INVENOTRY_INDEXES, PVInventoryIndexes.PV_INDEXES, itemName, amount);
-            closeScreen();
-        }
-        else if(containsIgnoreCase(targetContainer, "Shulker")) {
-            openShulkerBox("Shulker");
-            result = sendAmountFromSourceToTarget(ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, itemName, amount);
+        List<Integer> sourceIndexes = null;
+        List<Integer> targetIndexes = null;
 
-            // Update the shulker data after taking the item
-            LastShulker.updateShulkerData("Send Item");
-            LastShulker.showShulkerData();
+        switch (targetContainer.toLowerCase()) {
+            case "pv":
+                openPV1("");
+                sourceIndexes = PVInventoryIndexes.TOTAL_INVENOTRY_INDEXES;
+                targetIndexes = PVInventoryIndexes.PV_INDEXES;
+                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                closeScreen();
+                break;
 
-            closeScreen();
+            case "shulker":
+                openShulkerBox("Shulker");
+                sourceIndexes = ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES;
+                targetIndexes = ShulkerInventoryIndexes.SHULKER_BOX_INDEXES;
+                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                LastShulker.updateShulkerData("Send Item");
+                LastShulker.showShulkerData();
+                closeScreen();
+                break;
+
+            case "enderchest":
+                LOGGER.error("EnderChest not implemented yet");
+                break;
+
+            default:
+                LOGGER.error("Invalid target container specified");
+                break;
         }
-        else if(containsIgnoreCase(targetContainer, "EnderChest")) {
-            LOGGER.error("EnderChest not implemented yet");
-            //openTrade();
-            //result = sendAmountFromSourceToTarget(TradeInventoryIndexes.TOTAL_INVENTORY, TradeInventoryIndexes.MAIN_INVENTORY, itemName, amount);
-            //closeScreen();
-        }
-        else {
-            LOGGER.error("Invalid target container");
-        }
+
         return result;
     }
 
-    public static void takeItem(String itemName, int amount, String sourceContainer) {
-        if(containsIgnoreCase(sourceContainer, "pv")) {
-            openPV1("");
-            sendAmountFromSourceToTarget(PVInventoryIndexes.PV_INDEXES, PVInventoryIndexes.MAIN_INVENTORY_INDEXES, itemName, amount);
-            closeScreen();
-        }
-        else if(containsIgnoreCase(sourceContainer, "Shulker")) {
-            openShulkerBox("Shulker");
-            sendAmountFromSourceToTarget(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, itemName, amount);
+    public static boolean takeItems(Map<String, Integer> itemAmounts, String sourceContainer) {
+        boolean result = false;
+        List<Integer> sourceIndexes = null;
+        List<Integer> targetIndexes = null;
 
-            // Update the shulker data after taking the item
-             LastShulker.updateShulkerData("Take Item");
-             LastShulker.showShulkerData();
+        switch (sourceContainer.toLowerCase()) {
+            case "pv":
+                openPV1("");
+                sourceIndexes = PVInventoryIndexes.PV_INDEXES;
+                targetIndexes = PVInventoryIndexes.MAIN_INVENTORY_INDEXES;
+                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                closeScreen();
+                break;
 
-             closeScreen();
+            case "shulker":
+                openShulkerBox("Shulker");
+                sourceIndexes = ShulkerInventoryIndexes.SHULKER_BOX_INDEXES;
+                targetIndexes = ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES;
+                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                LastShulker.updateShulkerData("Take Item");
+                LastShulker.showShulkerData();
+                closeScreen();
+                break;
+
+            case "enderchest":
+                LOGGER.error("EnderChest not implemented yet");
+                break;
+
+            default:
+                LOGGER.error("Invalid source container specified");
+                break;
         }
-        else {
-            LOGGER.error("Invalid source container");
-        }
+
+        return result;
     }
 
     public static boolean isShulkerFull(String shulkerName) {
