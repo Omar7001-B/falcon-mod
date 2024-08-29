@@ -29,15 +29,15 @@ public class ExampleMixin {
 		if (packet instanceof ClickSlotC2SPacket) {
 			ClickSlotC2SPacket clickPacket = (ClickSlotC2SPacket) packet;
 			Int2ObjectMap<ItemStack> x = clickPacket.getModifiedStacks();
-			DEBUG.Slots("ClickSlotC2SPacket - Sync ID: " + clickPacket.getSyncId() + ", Slot: " + clickPacket.getSlot() + ", Button: " + clickPacket.getButton() + ", SlotActionType: " + clickPacket.getActionType() + ", getStack: " + clickPacket.getStack());
+			DEBUG.Mixin("ClickSlotC2SPacket - Sync ID: " + clickPacket.getSyncId() + ", Slot: " + clickPacket.getSlot() + ", Button: " + clickPacket.getButton() + ", SlotActionType: " + clickPacket.getActionType() + ", getStack: " + clickPacket.getStack());
 		} else if (packet instanceof ButtonClickC2SPacket) {
 			ButtonClickC2SPacket buttonPacket = (ButtonClickC2SPacket) packet;
-			DEBUG.Slots("ButtonClickC2SPacket - Sync ID: " + buttonPacket.getSyncId() + ", Button ID: " + buttonPacket.getButtonId());
+			DEBUG.Mixin("ButtonClickC2SPacket - Sync ID: " + buttonPacket.getSyncId() + ", Button ID: " + buttonPacket.getButtonId());
 		} else if (packet instanceof SelectMerchantTradeC2SPacket) {
 			SelectMerchantTradeC2SPacket tradePack = (SelectMerchantTradeC2SPacket) packet;
-			DEBUG.Shop("Trade id is: " + tradePack.getTradeId());
+			DEBUG.Mixin("Trade id is: " + tradePack.getTradeId());
 		} else if (packet instanceof CloseHandledScreenC2SPacket) {
-			DEBUG.Screens("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
+			DEBUG.Mixin("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
 		}
 	}
 

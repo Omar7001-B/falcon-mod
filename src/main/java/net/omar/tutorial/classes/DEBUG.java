@@ -61,4 +61,8 @@ public class DEBUG {
     public static void Store(String message) {
         writeToFile("Store.txt", message);
     }
+
+    public static void Mixin(String message) {
+        writeToFile("Mixin.txt", message);
+    }
 }
