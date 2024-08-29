@@ -10,6 +10,7 @@ import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.network.packet.s2c.play.SetTradeOffersS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
+import net.omar.tutorial.classes.DEBUG;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,19 +25,19 @@ public class ExampleMixin {
 	@Inject(method = "sendPacket", at = @At("HEAD"))
 	private void onSendPacket (Packet < ? > packet, CallbackInfo ci){
 		if(packet instanceof PlayPongC2SPacket || packet instanceof PlayerMoveC2SPacket) return;
-		LOGGER.info("Sent packet: {}", packet);
+		//DEBUG.Chat("Sent packet: {}", packet);
 		if (packet instanceof ClickSlotC2SPacket) {
 			ClickSlotC2SPacket clickPacket = (ClickSlotC2SPacket) packet;
 			Int2ObjectMap<ItemStack> x = clickPacket.getModifiedStacks();
-			LOGGER.info("ClickSlotC2SPacket - Sync ID: {}, Slot: {}, Button: {}, SlotActionType: {}, getStack: {} ", clickPacket.getSyncId(), clickPacket.getSlot(), clickPacket.getButton(), clickPacket.getActionType(), clickPacket.getStack());
+			DEBUG.Slots("ClickSlotC2SPacket - Sync ID: " + clickPacket.getSyncId() + ", Slot: " + clickPacket.getSlot() + ", Button: " + clickPacket.getButton() + ", SlotActionType: " + clickPacket.getActionType() + ", getStack: " + clickPacket.getStack());
 		} else if (packet instanceof ButtonClickC2SPacket) {
 			ButtonClickC2SPacket buttonPacket = (ButtonClickC2SPacket) packet;
-			LOGGER.info("ButtonClickC2SPacket - Sync ID: {}, Button ID: {}", buttonPacket.getSyncId(), buttonPacket.getButtonId());
-		} else if (packet instanceof SelectMerchantTradeC2SPacket){
+			DEBUG.Slots("ButtonClickC2SPacket - Sync ID: " + buttonPacket.getSyncId() + ", Button ID: " + buttonPacket.getButtonId());
+		} else if (packet instanceof SelectMerchantTradeC2SPacket) {
 			SelectMerchantTradeC2SPacket tradePack = (SelectMerchantTradeC2SPacket) packet;
-			LOGGER.info("Trade id is: " + tradePack.getTradeId());
-		} else if(packet instanceof CloseHandledScreenC2SPacket){
-			LOGGER.info("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
+			DEBUG.Shop("Trade id is: " + tradePack.getTradeId());
+		} else if (packet instanceof CloseHandledScreenC2SPacket) {
+			DEBUG.Screens("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
 		}
 	}
 
