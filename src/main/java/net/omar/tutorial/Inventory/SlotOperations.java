@@ -6,8 +6,10 @@ import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
+import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.indexes.PVInventoryIndexes;
 import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
+import net.omar.tutorial.last.LastShulker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static net.omar.tutorial.Tutorial.MOD_ID;
+import static net.omar.tutorial.Tutorial.*;
 
 public class SlotOperations {
 
@@ -159,9 +161,9 @@ public class SlotOperations {
         }
     }
 
-    public static void sendAmountFromSourceToTarget(List<Integer> sourceIndexes, List<Integer> targetIndexes, String itemName, int amount) {
+    public static boolean sendAmountFromSourceToTarget(List<Integer> sourceIndexes, List<Integer> targetIndexes, String itemName, int amount) {
         DefaultedList<Slot> slots = getSlots();
-        if (slots == null) return;
+        if (slots == null) return false;
 
         for (int sourceIndex : sourceIndexes) {
             Slot sourceSlot = slots.get(sourceIndex);
@@ -175,36 +177,74 @@ public class SlotOperations {
                 else {
                     SlotClicker.slotNormalClick(sourceIndex);
                     int targetIndex = getFirstEmptySlot(targetIndexes);
-                    if (targetIndex == -1) return;
+                    if (targetIndex == -1) return false;
                     for(int i = 0; i < toTransfer; i++) {
                         SlotClicker.slotRightClick(targetIndex);
                     }
                     SlotClicker.slotNormalClick(sourceIndex); // Return remaining items
                 }
                 amount -= toTransfer;
-                if (amount <= 0) return;
+                if (amount <= 0) return true;
             }
         }
+        return false;
     }
 
-    public static void sendItem(String itemName, int amount, String targetContainer) {
+    public static boolean sendItem(String itemName, int amount, String targetContainer) {
+        boolean result = false;
         if(containsIgnoreCase(targetContainer, "pv")) {
-            sendAmountFromSourceToTarget(PVInventoryIndexes.TOTAL_INVENOTRY_INDEXES, PVInventoryIndexes.PV_INDEXES, itemName, amount);
+            openPV1("");
+            result = sendAmountFromSourceToTarget(PVInventoryIndexes.TOTAL_INVENOTRY_INDEXES, PVInventoryIndexes.PV_INDEXES, itemName, amount);
+            closeScreen();
         }
         else if(containsIgnoreCase(targetContainer, "Shulker")) {
-            sendAmountFromSourceToTarget(ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, itemName, amount);
+            openShulkerBox("Shulker");
+            result = sendAmountFromSourceToTarget(ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, itemName, amount);
+
+            // Update the shulker data after taking the item
+            LastShulker.updateShulkerData("Send Item");
+            LastShulker.showShulkerData();
+
+            closeScreen();
         }
+        else if(containsIgnoreCase(targetContainer, "EnderChest")) {
+            LOGGER.error("EnderChest not implemented yet");
+            //openTrade();
+            //result = sendAmountFromSourceToTarget(TradeInventoryIndexes.TOTAL_INVENTORY, TradeInventoryIndexes.MAIN_INVENTORY, itemName, amount);
+            //closeScreen();
+        }
+        else {
+            LOGGER.error("Invalid target container");
+        }
+        return result;
     }
 
     public static void takeItem(String itemName, int amount, String sourceContainer) {
         if(containsIgnoreCase(sourceContainer, "pv")) {
+            openPV1("");
             sendAmountFromSourceToTarget(PVInventoryIndexes.PV_INDEXES, PVInventoryIndexes.MAIN_INVENTORY_INDEXES, itemName, amount);
+            closeScreen();
         }
         else if(containsIgnoreCase(sourceContainer, "Shulker")) {
+            openShulkerBox("Shulker");
             sendAmountFromSourceToTarget(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES, ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES, itemName, amount);
+
+            // Update the shulker data after taking the item
+             LastShulker.updateShulkerData("Take Item");
+             LastShulker.showShulkerData();
+
+             closeScreen();
         }
         else {
             LOGGER.error("Invalid source container");
         }
     }
+
+    public static boolean isShulkerFull(String shulkerName) {
+        openShulkerBox(shulkerName);
+        int emptySlots = countEmptySlots(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES);
+        closeScreen();
+        return emptySlots <= 1;
+    }
+
 }
