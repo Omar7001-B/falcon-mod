@@ -7,8 +7,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.indexes.Indexes;
-import net.omar.tutorial.last.LastPV;
-import net.omar.tutorial.last.LastShulker;
+import net.omar.tutorial.last.InventorySaver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +98,16 @@ public class SlotOperations {
         }
 
     }
+    public static int getSlotIndexContainsName(String itemName) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return -1;
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if(slots == null) return -1;
+        for (int i = 0; i < slots.size(); i++)
+            if(slots.get(i).getStack().getName().getString().contains(itemName)) return i;
+        return -1;
+    }
+
 
     public static int getSlotIndexByName(String itemName) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -106,7 +115,7 @@ public class SlotOperations {
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
         if(slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
-            if (slots.get(i).getStack().getName().getString().contains(itemName)) return i;
+            if (slots.get(i).getStack().getName().getString().equals(itemName)) return i;
         return -1;
     }
 
@@ -234,8 +243,7 @@ public class SlotOperations {
                 sourceIndexes = Indexes.PV.TOTAL_INVENTORY;
                 targetIndexes = Indexes.PV.PV;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                LastPV.updatePVData("Send Item");
-                LastPV.showPVData();
+                InventorySaver.PV("pv 1").update("Send Item To PV");
                 closeScreen();
                 break;
 
@@ -244,8 +252,7 @@ public class SlotOperations {
                 sourceIndexes = Indexes.Shulker.TOTAL_INVENTORY;
                 targetIndexes = Indexes.Shulker.SHULKER_BOX;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                LastShulker.updateShulkerData("Send Item");
-                LastShulker.showShulkerData();
+                InventorySaver.Shulker("Shulker").update("Send Item To Shulker");
                 closeScreen();
                 break;
 
@@ -272,8 +279,7 @@ public class SlotOperations {
                 sourceIndexes = Indexes.PV.PV;
                 targetIndexes = Indexes.PV.MAIN_INVENTORY;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                LastPV.updatePVData("Take Item");
-                LastPV.showPVData();
+                InventorySaver.PV("pv 1").update("Take Item");
                 closeScreen();
                 break;
 
@@ -282,8 +288,7 @@ public class SlotOperations {
                 sourceIndexes = Indexes.Shulker.SHULKER_BOX;
                 targetIndexes = Indexes.Shulker.TOTAL_INVENTORY;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                LastShulker.updateShulkerData("Take Item");
-                LastShulker.showShulkerData();
+                InventorySaver.Shulker("Shulker").update("Take Item");
                 closeScreen();
                 break;
 
