@@ -1,5 +1,7 @@
 package net.omar.tutorial.classes;
 
+import net.omar.tutorial.indexes.Market;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ArrayList;
@@ -65,5 +67,22 @@ public class TreeNode {
             reversedPath.add(path.get(i));
         }
         return reversedPath;
+    }
+
+    public static List<Trade> pathFromItemToItem(String item1, String item2) {
+
+        if(item2.equals("Gold Block"))
+            return List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldBlock_t);
+
+        if(item2.equals("Gold Ingot"))
+            return List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldIngot_t);
+
+        if(item2.equals("Gold Nugget"))
+            return List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldNugget_t);
+
+        if(item2.equals("Raw Gold"))
+            return List.of(Market.rawGoldToEmerald_t, Market.emeraldToRawGold_t);
+
+        return new ArrayList<>();
     }
 }
