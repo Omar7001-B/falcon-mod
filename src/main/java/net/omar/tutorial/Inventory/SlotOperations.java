@@ -6,9 +6,8 @@ import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
-import net.omar.tutorial.classes.DEBUG;
-import net.omar.tutorial.indexes.PVInventoryIndexes;
-import net.omar.tutorial.indexes.ShulkerInventoryIndexes;
+import net.omar.tutorial.indexes.Indexes;
+import net.omar.tutorial.last.LastPV;
 import net.omar.tutorial.last.LastShulker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,23 @@ public class SlotOperations {
 
     public static boolean containsIgnoreCase(String str, String searchStr) {
         if (str == null || searchStr == null) return false;
-        return str.toLowerCase().contains(searchStr.toLowerCase());
+
+        // Split the string between each lowercase and uppercase letter
+        //DEBUG.Store("Original String: " + searchStr);
+        searchStr = searchStr.replaceAll("([a-z])([A-Z])", "$1 $2");
+        //DEBUG.Store("Modified String: " + searchStr);
+
+        // Convert both strings to lowercase and split the search string into words
+        String[] wordsToSearch = searchStr.toLowerCase().split("\\s+");
+        String lowerStr = str.toLowerCase();
+
+        // Check if each word in the search string is contained in the main string
+        for (String word : wordsToSearch) {
+            if (!lowerStr.contains(word)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static DefaultedList<Slot> getSlots() {
@@ -86,18 +101,29 @@ public class SlotOperations {
     }
 
     public static int getSlotIndexByName(String itemName) {
-        DefaultedList<Slot> slots = getSlots();
-        if (slots == null) {
-            LOGGER.info("No slots found");
-            return -1;
-        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return -1;
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if(slots == null) return -1;
+        for (int i = 0; i < slots.size(); i++)
+            if (slots.get(i).getStack().getName().getString().contains(itemName)) return i;
+        return -1;
+    }
 
-        for (int i = 0; i < slots.size(); i++) {
-            if (slots.get(i).hasStack() && containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) {
-                return i;
-            }
-        }
-        return -1; // Not found
+    public static int getSlotIndexByItemNameIgnoreCase(String itemName) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return -1;
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if(slots == null) return -1;
+        for (int i = 0; i < slots.size(); i++)
+            if (containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) return i;
+        return -1;
+    }
+
+    public static String getSlotNameByIndex(int index) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return "null";
+        return slots.get(index).hasStack() ? slots.get(index).getStack().getItem().getName().getString() : "empty";
     }
 
     public static int getElementAmountByIndex(int index) {
@@ -172,7 +198,9 @@ public class SlotOperations {
             if (!sourceSlot.hasStack()) continue;
 
             String itemName = sourceSlot.getStack().getItem().getName().getString();
+            //DEBUG.Store("Item: " + itemName + ", Amount: " + sourceSlot.getStack().getCount());
             for (Map.Entry<String, Integer> entry : remainingAmounts.entrySet()) {
+                //DEBUG.Store("Item: " + entry.getKey() + ", Amount: " + entry.getValue());
                 if (entry.getValue() == 0 || !containsIgnoreCase(itemName, entry.getKey())) continue;
 
                 int toTransfer = Math.min(entry.getValue(), sourceSlot.getStack().getCount());
@@ -203,16 +231,18 @@ public class SlotOperations {
         switch (targetContainer.toLowerCase()) {
             case "pv":
                 openPV1("");
-                sourceIndexes = PVInventoryIndexes.TOTAL_INVENOTRY_INDEXES;
-                targetIndexes = PVInventoryIndexes.PV_INDEXES;
+                sourceIndexes = Indexes.PV.TOTAL_INVENTORY;
+                targetIndexes = Indexes.PV.PV;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                LastPV.updatePVData("Send Item");
+                LastPV.showPVData();
                 closeScreen();
                 break;
 
             case "shulker":
                 openShulkerBox("Shulker");
-                sourceIndexes = ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES;
-                targetIndexes = ShulkerInventoryIndexes.SHULKER_BOX_INDEXES;
+                sourceIndexes = Indexes.Shulker.TOTAL_INVENTORY;
+                targetIndexes = Indexes.Shulker.SHULKER_BOX;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
                 LastShulker.updateShulkerData("Send Item");
                 LastShulker.showShulkerData();
@@ -239,16 +269,18 @@ public class SlotOperations {
         switch (sourceContainer.toLowerCase()) {
             case "pv":
                 openPV1("");
-                sourceIndexes = PVInventoryIndexes.PV_INDEXES;
-                targetIndexes = PVInventoryIndexes.MAIN_INVENTORY_INDEXES;
+                sourceIndexes = Indexes.PV.PV;
+                targetIndexes = Indexes.PV.MAIN_INVENTORY;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+                LastPV.updatePVData("Take Item");
+                LastPV.showPVData();
                 closeScreen();
                 break;
 
             case "shulker":
                 openShulkerBox("Shulker");
-                sourceIndexes = ShulkerInventoryIndexes.SHULKER_BOX_INDEXES;
-                targetIndexes = ShulkerInventoryIndexes.TOTAL_INVENTORY_INDEXES;
+                sourceIndexes = Indexes.Shulker.SHULKER_BOX;
+                targetIndexes = Indexes.Shulker.TOTAL_INVENTORY;
                 result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
                 LastShulker.updateShulkerData("Take Item");
                 LastShulker.showShulkerData();
@@ -269,7 +301,7 @@ public class SlotOperations {
 
     public static boolean isShulkerFull(String shulkerName) {
         openShulkerBox(shulkerName);
-        int emptySlots = countEmptySlots(ShulkerInventoryIndexes.SHULKER_BOX_INDEXES);
+        int emptySlots = countEmptySlots(Indexes.Shulker.SHULKER_BOX);
         closeScreen();
         return emptySlots <= 1;
     }
