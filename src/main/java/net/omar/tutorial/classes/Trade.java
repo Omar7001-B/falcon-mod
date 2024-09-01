@@ -50,4 +50,17 @@ public class Trade {
         path.add(Integer.toString(TradeIndex));
         return path;
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s x%d + %s x%d -> %s x%d",
+                firstItemName,
+                firstItemAmount,
+                secondItemName,
+                secondItemAmount,
+                resultName,
+                resultAmount
+        );
+    }
 }
