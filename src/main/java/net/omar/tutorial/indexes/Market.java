@@ -46,12 +46,12 @@ public class Market {
     public static Trade goldNuggetToWoodenSwordIV_t = woodenSwords_P2.addTrade(new Trade(4, "Gold Nugget", 4, "Wooden Sword", 1, "Wooden Sword IV", 1));
     public static Trade goldNuggetToWoodenSwordV_t = woodenSwords_P2.addTrade(new Trade(5, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword V", 1));
     public static Trade goldNuggetToWoodenSwordVI_t = woodenSwords_P2.addTrade(new Trade(6, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword VI", 1));
-    public static Trade goldNuggetToWoodenSwordVII_t = woodenSwords_P2.addTrade(new Trade(1, "Gold Nugget", 1, null, 0, "Wooden Sword VII", 1));
-    public static Trade goldNuggetToWoodenSwordVIII_t = woodenSwords_P2.addTrade(new Trade(2, "Gold Nugget", 2, "Wooden Sword", 1, "Wooden Sword VIII", 1));
-    public static Trade goldNuggetToWoodenSwordIX_t = woodenSwords_P2.addTrade(new Trade(3, "Gold Nugget", 4, "Wooden Sword", 1, "Wooden Sword IX", 1));
-    public static Trade goldNuggetToWoodenSwordX_t = woodenSwords_P2.addTrade(new Trade(4, "Gold Nugget", 4, "Wooden Sword", 1, "Wooden Sword X", 1));
-    public static Trade goldNuggetToWoodenSwordXI_t = woodenSwords_P2.addTrade(new Trade(5, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword XI", 1));
-    public static Trade goldNuggetToWoodenSwordXII_t = woodenSwords_P2.addTrade(new Trade(6, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword XII", 1));
+    //public static Trade goldNuggetToWoodenSwordVII_t = woodenSwords_P2.addTrade(new Trade(1, "Gold Nugget", 1, null, 0, "Wooden Sword VII", 1));
+    //public static Trade goldNuggetToWoodenSwordVIII_t = woodenSwords_P2.addTrade(new Trade(2, "Gold Nugget", 2, "Wooden Sword", 1, "Wooden Sword VIII", 1));
+    //public static Trade goldNuggetToWoodenSwordIX_t = woodenSwords_P2.addTrade(new Trade(3, "Gold Nugget", 4, "Wooden Sword", 1, "Wooden Sword IX", 1));
+    //public static Trade goldNuggetToWoodenSwordX_t = woodenSwords_P2.addTrade(new Trade(4, "Gold Nugget", 4, "Wooden Sword", 1, "Wooden Sword X", 1));
+    //public static Trade goldNuggetToWoodenSwordXI_t = woodenSwords_P2.addTrade(new Trade(5, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword XI", 1));
+    //public static Trade goldNuggetToWoodenSwordXII_t = woodenSwords_P2.addTrade(new Trade(6, "Gold Nugget", 5, "Wooden Sword", 1, "Wooden Sword XII", 1));
     public static TreeNode stoneSwords_P2 = swords_P1.addNode(new TreeNode("sᴛᴏɴᴇ sᴡᴏʀᴅs"));
     public static Trade goldNuggetToStoneSword_t = stoneSwords_P2.addTrade(new Trade(1, "Gold Nugget", 4, "Wooden Sword", 1, "Stone Sword", 1));
     public static Trade goldNuggetToStoneSwordII_t = stoneSwords_P2.addTrade(new Trade(2, "Gold Nugget", 4, "Stone Sword", 1, "Stone Sword II", 1));
@@ -60,6 +60,15 @@ public class Market {
     public static Trade rawgoldToStoneSwordV_t = stoneSwords_P2.addTrade(new Trade(5, "RawGold", 2, "Stone Sword", 1, "Stone Sword V", 1));
     public static Trade rawgoldToStoneSwordVI_t = stoneSwords_P2.addTrade(new Trade(6, "RawGold", 4, "Stone Sword", 1, "Stone Sword VI", 1));
     public static TreeNode ironSwords_P2 = swords_P1.addNode(new TreeNode("ɪʀᴏɴ sᴡᴏʀᴅs"));
+
+    public static Trade rawgoldToIronSword_t = ironSwords_P2.addTrade(new Trade(1, "RawGold", 4, "Stone Sword", 1, "Iron Sword", 1));
+    public static Trade rawgoldToIronSwordII_t = ironSwords_P2.addTrade(new Trade(2, "RawGold", 6, "Iron Sword", 1, "Iron Sword II", 1));
+    public static Trade goldIngotToIronSwordIII_t = ironSwords_P2.addTrade(new Trade(3, "Gold Ingot", 1, "Iron Sword", 1, "Iron Sword III", 1));
+    public static Trade goldIngotToIronSwordIV_t = ironSwords_P2.addTrade(new Trade(4, "Gold Ingot", 2, "Iron Sword", 1, "Iron Sword IV", 1));
+    public static Trade goldIngotToIronSwordV_t = ironSwords_P2.addTrade(new Trade(5, "Gold Ingot", 3, "Iron Sword", 1, "Iron Sword V", 1));
+    public static Trade goldIngotToIronSwordVI_t = ironSwords_P2.addTrade(new Trade(6, "Gold Ingot", 5, "Iron Sword", 1, "Iron Sword VI", 1));
+
+
     public static TreeNode diamondSwords_P2 = swords_P1.addNode(new TreeNode("ᴅɪᴀᴍᴏɴᴅ sᴡᴏʀᴅs"));
         public static Trade goldIngotToDiamondSword_t = diamondSwords_P2.addTrade(new Trade(1, "Gold Ingot", 3, "Iron Sword", 1, "Diamond Sword", 1));
         public static Trade goldIngotToDiamondSwordII_t = diamondSwords_P2.addTrade(new Trade(2, "Gold Ingot", 4, "Diamond Sword", 1, "Diamond Sword II", 1));
