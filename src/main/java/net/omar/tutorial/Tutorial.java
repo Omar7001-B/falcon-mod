@@ -115,7 +115,7 @@ public class Tutorial implements ModInitializer {
 
 
     public static int maxInputForSlots(Map<String, Integer> inventory, List<Trade> tradePath) {
-        int inventoryMaxSlots = 36;
+        int inventoryMaxSlots = 35;
         int input = tradePath.get(0).firstItemAmount;
         if (tradePath.get(0).secondItemAmount > 0 && tradePath.get(0).firstItemName.equals(tradePath.get(0).secondItemName))
             input += tradePath.get(0).secondItemAmount;
@@ -145,7 +145,7 @@ public class Tutorial implements ModInitializer {
                 int producedAmount = (availableInput / requiredInput) * t.resultAmount;
                 int remainingInput = availableInput % requiredInput;
 
-                DEBUG.Store(t.firstItemAmount + " " + t.firstItemName + " + " + t.secondItemAmount + " -> " + t.resultAmount + " " + t.resultName);
+                //DEBUG.Store(t.firstItemAmount + " " + t.firstItemName + " + " + t.secondItemAmount + " -> " + t.resultAmount + " " + t.resultName);
 //                DEBUG.Store("Required Input: " + requiredInput);
 //                DEBUG.Store("Available Input: " + availableInput);
 //                DEBUG.Store("Produced Amount: " + producedAmount);
@@ -603,13 +603,14 @@ public class Tutorial implements ModInitializer {
 
     public static void buyFullArmors(String unused) {
         openInventory("");
-        TreeNode mainItem = Market.armors_P1;
+        TreeNode mainItem = Market.swords_P1;
 
         Map<String, Integer> materialNeeded = getMaterialNeeded(mainItem);
         Map<String, Integer> transferMap = new HashMap<>();
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) transferMap.put(entry.getKey(), 9999);
         sendItems(transferMap, "pv");
         DEBUG.Store("Material Needed:" + materialNeeded);
+        DEBUG.Store("Material we have: " + InventorySaver.PV("pv 1").itemCounts);
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) {
             String itemName = entry.getKey();
             int itemAmount = entry.getValue();
@@ -620,13 +621,16 @@ public class Tutorial implements ModInitializer {
                 int emptySlots = InventorySaver.Shulker("Shulker").emptySlots;
                 int rawGoldInput = Math.min(maxInputForSlots(InventorySaver.Inventory("Inventory").itemCounts, tradePath), calculateInputNeeded(amountNeeded, tradePath));
                 DEBUG.Store("Raw Gold Needed: " + rawGoldInput);
+                takeItems(Map.of("", 0), "Shulker");
                 if (InventorySaver.Shulker("Shulker").filledSlots == 0){
                     dropItem("Shulker");
                     takeItems(Map.of("Shulker", 1), "pv");
                 }
                 int rawGoldWeHave = InventorySaver.Inventory("Inventory").getItemCountByName("Raw Gold");
                 takeItems(Map.of("Raw Gold", rawGoldInput - rawGoldWeHave), "Shulker");
-                for (Trade trade : tradePath) executeTrade(List.of(Triple.of(trade, 999999, 0)));
+//                DEBUG.Store("Trade path Size: "  + tradePath.size());
+                for (Trade trade : tradePath)
+                    executeTrade(List.of(Triple.of(trade, 999999, 0)));
                 sendItems(Map.of(itemName, 9999), "pv");
                 amountNeeded = itemAmount - InventorySaver.PV("PV 1").getItemCountByName(itemName);
             }

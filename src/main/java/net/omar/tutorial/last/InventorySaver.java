@@ -41,7 +41,7 @@ public class InventorySaver {
             }
         });
 
-        DEBUG.Store("Operation: " + operation);
+        //DEBUG.Store("Operation: " + operation);
     }
 
     public static int calculateTotalSlots(Map<String, Integer> items){
