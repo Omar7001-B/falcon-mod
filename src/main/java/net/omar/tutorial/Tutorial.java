@@ -1,45 +1,31 @@
 package net.omar.tutorial;
 
 import com.mojang.authlib.GameProfile;
-import com.sun.jna.WString;
-import com.sun.source.tree.Tree;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
-import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.village.TradeOffer;
-import net.omar.tutorial.Inventory.NameConverter;
 import net.omar.tutorial.Inventory.SlotClicker;
 import net.omar.tutorial.Inventory.SlotOperations;
+import net.omar.tutorial.Managers.TradeManager;
 import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.classes.TreeNode;
-import net.omar.tutorial.indexes.Indexes;
 import net.omar.tutorial.indexes.Market;
 import net.omar.tutorial.last.InventorySaver;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.commons.logging.Log;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -52,7 +38,7 @@ import static net.omar.tutorial.classes.TreeNode.pathFromItemToItem;
 public class Tutorial implements ModInitializer {
 
     // Declare the client
-    private static final MinecraftClient client = MinecraftClient.getInstance();
+    public static final MinecraftClient client = MinecraftClient.getInstance();
     public static String currentScreenString = "";
     public static final String MOD_ID = "tutorial";
 
@@ -66,8 +52,8 @@ public class Tutorial implements ModInitializer {
     private final Map<String, Consumer<String>> customCommands = new HashMap<>();
 
     public void loadAllKeyBinds() {
-        registerKeyBinding("Random Message", "Chat", GLFW.GLFW_KEY_R, Tutorial::sendRandomChatMessage);
-        registerKeyBinding("Open Shop", "Farm", GLFW.GLFW_KEY_KP_MULTIPLY, Tutorial::openShop);
+        registerKeyBinding("Random Message", "Chat", GLFW.GLFW_KEY_R, Tutorial::farmGoldBlock);
+        registerKeyBinding("Open Shop", "Farm", GLFW.GLFW_KEY_KP_MULTIPLY, TradeManager::openShop);
         registerKeyBinding("Open PV", "Farm", GLFW.GLFW_KEY_SLASH, Tutorial::openPV1);
         // make capslock keybinding
         registerKeyBinding("Testing Function", "Debug", GLFW.GLFW_KEY_Z, Tutorial::farmRawGold);
@@ -79,129 +65,17 @@ public class Tutorial implements ModInitializer {
         //registerKeyPressBinding(GLFW.GLFW_KEY_X, (String s) -> SlotOperations.showAllSlots(null));
         registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> {
             LOGGER.info("Y key pressed");
-            getMaterialNeeded(Market.armors_P1);
-            getMaterialNeeded(Market.swords_P1);
-            getMaterialNeeded(Market.pickaxes_P1);
-            getMaterialNeeded(Market.axes_P1);
+            TradeManager.getMaterialNeeded(Market.armors_P1);
+            TradeManager.getMaterialNeeded(Market.swords_P1);
+            TradeManager.getMaterialNeeded(Market.pickaxes_P1);
+            TradeManager.getMaterialNeeded(Market.axes_P1);
         });
-    }
-
-    public static int calculateInputNeeded(int targetOutput, List<Trade> tradePath) {
-        if (tradePath.isEmpty()) return targetOutput;
-        int currentOutput = 0;
-        int initialInput = 0;
-        Map<String, Integer> materialMap = new HashMap<>();
-
-        while (currentOutput < targetOutput) {
-            initialInput += tradePath.get(0).firstItemAmount;
-            int inputAmount = initialInput;
-            materialMap.clear();
-
-            for (int i = 0; i < tradePath.size(); i++) {
-                Trade currentTrade = tradePath.get(i);
-                int inputNeeded = currentTrade.firstItemAmount + currentTrade.secondItemAmount;
-                int outputAmount = currentTrade.resultAmount;
-                int tradeMultiplier = inputAmount / inputNeeded;
-
-                materialMap.put(currentTrade.firstItemName, inputAmount % inputNeeded);
-                inputAmount = tradeMultiplier * outputAmount;
-            }
-
-            currentOutput = inputAmount;
-        }
-
-        return initialInput;
-    }
-
-
-    public static int maxInputForSlots(Map<String, Integer> inventory, List<Trade> tradePath) {
-        int inventoryMaxSlots = 35;
-        int input = tradePath.get(0).firstItemAmount;
-        if (tradePath.get(0).secondItemAmount > 0 && tradePath.get(0).firstItemName.equals(tradePath.get(0).secondItemName))
-            input += tradePath.get(0).secondItemAmount;
-        int maxInput = 0;
-
-        while (true) {
-            Map<String, Integer> inv = new HashMap<>(inventory);
-            Map<String, Integer> trade = new HashMap<>();
-
-            String firstItem = tradePath.get(0).firstItemName;
-            trade.put(firstItem, input);
-            inv.put(firstItem, inv.getOrDefault(firstItem, 0) + input);
-
-            int oldSlots = InventorySaver.calculateTotalSlots(inventory);
-            int newSlots = InventorySaver.calculateTotalSlots(inv);
-
-//            DEBUG.Store("Input: " + input);
-//            DEBUG.Store("Old Slots: " + oldSlots + " New Slots: " + newSlots);
-//            DEBUG.Store("Trade Path: " + tradePath);
-//            DEBUG.Store("Inventory: " + inv);
-
-            if (newSlots > inventoryMaxSlots) return maxInput;
-
-            for (Trade t : tradePath) {
-                int requiredInput = t.firstItemAmount + (t.firstItemName.equals(t.secondItemName) ? t.secondItemAmount : 0);
-                int availableInput = trade.getOrDefault(t.firstItemName, 0);
-                int producedAmount = (availableInput / requiredInput) * t.resultAmount;
-                int remainingInput = availableInput % requiredInput;
-
-                //DEBUG.Store(t.firstItemAmount + " " + t.firstItemName + " + " + t.secondItemAmount + " -> " + t.resultAmount + " " + t.resultName);
-//                DEBUG.Store("Required Input: " + requiredInput);
-//                DEBUG.Store("Available Input: " + availableInput);
-//                DEBUG.Store("Produced Amount: " + producedAmount);
-//                DEBUG.Store("Remaining Input: " + remainingInput);
-
-                trade.put(t.firstItemName, remainingInput);
-                trade.put(t.resultName, inv.getOrDefault(t.resultName, 0) + producedAmount);
-
-                inv.put(t.firstItemName, inv.getOrDefault(t.firstItemName, 0) - availableInput + remainingInput);
-                inv.put(t.resultName, inv.getOrDefault(t.resultName, 0) + producedAmount);
-
-//                DEBUG.Store("Inventory: " + inv);
-//                DEBUG.Store("Trade: " + trade);
-
-                if (InventorySaver.calculateTotalSlots(inv) > inventoryMaxSlots) return maxInput;
-            }
-
-            maxInput = input;
-            input += tradePath.get(0).firstItemAmount + tradePath.get(0).secondItemAmount;
-        }
-    }
-
-
-    public static Map<String, Integer> getMaterialNeeded(TreeNode item_p) {
-        Map<String, Integer> materialNeeded = new HashMap<>();
-        // make queue
-        Queue<TreeNode> queue = new LinkedList<>();
-        queue.add(item_p);
-        while (!queue.isEmpty()) {
-            TreeNode item = queue.poll();
-            if (item.children.size() > 0) {
-                for (TreeNode child : item.children) queue.add(child);
-            }
-            if (item.trades.size() > 0) {
-                for (Trade trade : item.trades) {
-                    //DEBUG.Shop("Trade: " + trade.TradeIndex + " " + trade.firstItemName + " x " + trade.firstItemAmount + " + " + trade.secondItemName + " x " + trade.secondItemAmount + " = " + trade.resultName + " x " + trade.resultAmount);
-
-                    materialNeeded.put(trade.firstItemName, materialNeeded.getOrDefault(trade.firstItemName, 0) + trade.firstItemAmount);
-
-                    /*
-                    if(trade.secondItemAmount != 0) {
-                        materialNeeded.put(trade.secondItemName, materialNeeded.getOrDefault(trade.secondItemName, 0) + trade.secondItemAmount);
-                    }
-                     */
-                }
-            }
-        }
-
-        DEBUG.Store("Material Needed: " + materialNeeded);
-        return materialNeeded;
     }
 
 
     public void loadAllCustomCommands() {
         registerCustomCommand("!random", Tutorial::sendRandomChatMessage);
-        registerCustomCommand("!shop", Tutorial::openShop);
+        registerCustomCommand("!shop", TradeManager::openShop);
         registerCustomCommand("!pv", Tutorial::openPV1);
         //registerCustomCommand("!test", Tutorial::testFunction);
     }
@@ -338,7 +212,7 @@ public class Tutorial implements ModInitializer {
     // ----------------------------- Shop Functions -----------------------------
     public static int SCREENS_DELAY = 100;
     public static int FREEZE_DELAY = 200;
-    public static int MAX_SCREEN_DELAY = 2000;
+    public static int MAX_SCREEN_DELAY = 10000;
 
     public static int SLOT_DELAY = 50;
     public static int MAX_SLOT_DELAY = 2000;
@@ -357,17 +231,22 @@ public class Tutorial implements ModInitializer {
 
 
     // -----------------------------  Screens Functions -----------------------------
-    public static void waitForScreenChange() {
+    public static boolean waitForScreenChange() {
         String oldScreen = currentScreenString;
+        boolean changed = false;
         for (int i = 0; i < MAX_SCREEN_DELAY; i += SCREENS_DELAY) {
             Sleep(SCREENS_DELAY);
             currentScreenString = client.currentScreen == null ? "null" : client.currentScreen.toString();
-            if (!oldScreen.equals(currentScreenString)) break;
+            if (!oldScreen.equals(currentScreenString)) {
+                changed = true;
+                break;
+            }
         }
         Sleep(FREEZE_DELAY);
+        return changed;
     }
 
-    private static final Map<Integer, String> slotStates = new HashMap<>();
+    public static final Map<Integer, String> slotStates = new HashMap<>();
 
     public static void waitForSlotChange(int index) {
         String oldState = slotStates.getOrDefault(index, "");
@@ -384,194 +263,68 @@ public class Tutorial implements ModInitializer {
         DEBUG.Shop("Old State: " + oldState + " Current State: " + slotStates.getOrDefault(index, "") + " Not Changed ❌" + " at index: " + index);
     }
 
-    public static void closeScreen() {
+    public static boolean closeScreen() {
         MinecraftClient.getInstance().execute(() -> {
             if (MinecraftClient.getInstance().currentScreen != null) {
                 MinecraftClient.getInstance().currentScreen.close();
             }
         });
-        waitForScreenChange();
+        return waitForScreenChange();
     }
 
-    // ----------------------------- Trades -----------------------------
-    public static int calcNumberOfClicks(TradeOffer offer, int type) {
-        //SlotOperations.showAllSlots(null);
-
-        String firstItemName = NameConverter.offerNamesToInventoryNames(offer.getAdjustedFirstBuyItem().getName().getString());
-        String secondItemName = NameConverter.offerNamesToInventoryNames(offer.getSecondBuyItem().getName().getString());
-        String resultName = NameConverter.offerNamesToInventoryNames(offer.getSellItem().getName().getString());
-
-        int firstItemAmount = offer.getAdjustedFirstBuyItem().getCount();
-        int secondItemAmount = offer.getSecondBuyItem().getCount();
-        int resultAmount = offer.getSellItem().getCount();
-
-        int totalFirstItemAmount = SlotOperations.countTotalElementAmount(Indexes.Trade.TOTAL_INVENTORY_WITHOUT_RESULT_SLOT, firstItemName);
-        int totalSecondItemAmount = firstItemName.equals(secondItemName) ? 0 :
-                SlotOperations.countTotalElementAmount(Indexes.Trade.TOTAL_INVENTORY_WITHOUT_RESULT_SLOT, secondItemName);
-
-        //DEBUG.Shop("Total amount of " + firstItemName + ": " + totalFirstItemAmount);
-        //DEBUG.Shop("Total amount of " + secondItemName + ": " + totalSecondItemAmount);
-
-        int stack = 64;
-        if (firstItemName.equals(secondItemName)) {
-            firstItemAmount += secondItemAmount;
-            stack += 64;
-        }
-
-        int numberOfClicks = 0;
-        int numberOfEmptySlots = SlotOperations.countEmptySlots(Indexes.Trade.TOTAL_INVENTORY);
-        int totalInputWaste = 0;
-        int totalOutputAmount = 0;
-        boolean isStacked = NameConverter.isStackedItem(resultName);
-        boolean isUpgrade = !NameConverter.isStackedItem(secondItemName);
-
-//
-//        DEBUG.Shop("--------Before Clicks---------");
-//        DEBUG.Shop("First Item: " + firstItemName + " x " + firstItemAmount);
-//        DEBUG.Shop("Second Item: " + secondItemName + " x " + secondItemAmount);
-//        DEBUG.Shop("Result: " + resultName + " x " + resultAmount + " (Stacked: " + isStacked + ")");
-//        DEBUG.Shop("--------...---------");
-
-
-        try {
-            while (totalFirstItemAmount >= firstItemAmount) {
-                int inputWeHave = type == 1 || isUpgrade ? firstItemAmount :
-                        Math.min(totalFirstItemAmount - totalFirstItemAmount % firstItemAmount, stack - stack % firstItemAmount);
-
-                if (inputWeHave == 0) break;
-
-                int outPutWeGet = (inputWeHave / firstItemAmount) * resultAmount;
-                totalFirstItemAmount -= inputWeHave;
-
-                totalInputWaste += inputWeHave;
-                totalOutputAmount += outPutWeGet;
-
-                while (totalInputWaste >= 64) {
-                    totalInputWaste -= 64;
-                    numberOfEmptySlots++;
-                }
-
-                if ((!isStacked && totalOutputAmount <= numberOfEmptySlots) || (isStacked && Math.ceil(totalOutputAmount / 64.0) <= numberOfEmptySlots))
-                    numberOfClicks++;
-                else break;
-
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error in calcNumberOfClicks: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-//        DEBUG.Shop("Total First Item: " + totalFirstItemAmount);
-//        DEBUG.Shop("Total Input Waste: " + totalInputWaste + " of " + firstItemName);
-//        DEBUG.Shop("Total Output Amount: " + totalOutputAmount + " of " + resultName);
-//        DEBUG.Shop("Number of Clicks: " + numberOfClicks);
-//        DEBUG.Shop("Number of Empty Slots: " + numberOfEmptySlots);
-//        DEBUG.Shop("--------END---------");
-
-        return numberOfClicks;
-    }
-
-    public static boolean isAutomatedTrade;
-
-    public static void makeTrade(int offerIndex, int clicks, int type) {
-        for (int i = 0; !(client.currentScreen instanceof MerchantScreen) && i < MAX_SCREEN_DELAY; i += SCREENS_DELAY)
-            Sleep(SCREENS_DELAY);
-        if (!(client.currentScreen instanceof MerchantScreen)) return;
-        slotStates.clear();
-        TradeOffer offer = ((MerchantScreen) client.currentScreen).getScreenHandler().getRecipes().get(offerIndex);
-        boolean isUpgrade = !NameConverter.isStackedItem(offer.getSecondBuyItem().getName().getString());
-        int numberOfClicks = Math.min(clicks, calcNumberOfClicks(offer, type));
-        isAutomatedTrade = true;
-        for (int i = 0; i < numberOfClicks; i++) {
-            client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(offerIndex));
-            if (type == 1) {
-                SlotClicker.slotNormalClick(Indexes.Trade.RESULT_SLOT);
-                Sleep(SLOT_DELAY);
-                SlotClicker.slotNormalClick(SlotOperations.getFirstEmptySlot(Indexes.Trade.TOTAL_INVENTORY));
-            } else {
-                SlotClicker.slotShiftLeftClick(Indexes.Trade.RESULT_SLOT);
-            }
-        }
-        isAutomatedTrade = false;
-    }
 
     // ----------------------------- Helper Functions -----------------------------
-    private static void sendCommand(String command) {
+    public static void sendCommand(String command) {
         if (client.player == null) return;
         client.player.networkHandler.sendChatCommand(command);
     }
 
-    private static void sendChatMessage(String message) {
+    public static void sendChatMessage(String message) {
         if (client.player == null) return;
         client.player.networkHandler.sendChatMessage(message);
     }
 
-    private static void sendRandomChatMessage(String unused) {
+    public static void sendRandomChatMessage(String unused) {
         String[] messages = {"Hello guys!", "What's up everyone?", "Hey there!", "How's it going?", "Good day, folks!"};
         String randomMessage = messages[new Random().nextInt(messages.length)];
         sendChatMessage(randomMessage);
     }
 
-    private static void openShop(String unused) {
-        sendCommand("shop");
-        waitForScreenChange();
-    }
-
-    private static void openInventory(String unused) {
-        if (client.player == null) return;
+    public static boolean openInventory(String unused) {
+        if (client.player == null) return false;
         MinecraftClient.getInstance().execute(() -> {
             MinecraftClient.getInstance().setScreen(new InventoryScreen(client.player));
         });
-        waitForScreenChange();
+        boolean changed = waitForScreenChange();
         InventorySaver.Inventory("Inventory").update("Open Inventory");
+        return changed;
     }
 
-    public static void openPV1(String unused) {
+    public static boolean openPV1(String unused) {
         sendCommand("pv 1");
-        waitForScreenChange();
+        boolean changed = waitForScreenChange();
         InventorySaver.PV("PV 1").update("Open PV");
-    }
-
-    // BuyItem
-    private static void executeTrade(List<Triple<Trade, Integer, Integer>> tradeDataList) {
-        if (tradeDataList.isEmpty()) return;
-
-        // Extract path from the first item
-        Triple<Trade, Integer, Integer> firstEntry = tradeDataList.get(0);
-        Trade firstTrade = firstEntry.getLeft();
-        List<String> path = firstTrade.getPathFromRoot();
-
-        openShop("");
-
-        SlotClicker.slotNormalClick(SlotOperations.getSlotIndexByName(path.get(1)));
-        waitForScreenChange();
-        SlotClicker.slotNormalClick(SlotOperations.getSlotIndexByName(path.get(2)));
-        waitForScreenChange();
-
-        for (Triple<Trade, Integer, Integer> entry : tradeDataList) {
-            //DEBUG.Shop("Making trade: " + entry.getLeft().TradeIndex + " with " + entry.getMiddle() + " clicks");
-            Trade trade = entry.getLeft();
-            Integer clicks = entry.getMiddle();
-            Integer type = entry.getRight();
-            if (trade == null) continue;
-            makeTrade(trade.TradeIndex - 1, clicks, type);
-        }
-        closeScreen();
+        return changed;
     }
 
 
-    public static void openShulkerBox(String name) {
+    public static boolean openShulkerBox(String name) {
         openInventory("");
         Sleep(1000);
         int slot = SlotOperations.getSlotIndexContainsName(name);
         //LOGGER.info("Found " + name + " at slot " + slot);
-        if (slot == -1) return;
-        SlotClicker.slotRightClick(slot);
-        waitForScreenChange();
+        if (slot == -1) {
+            closeScreen();
+            return false;
+        }
 
-        // Update the shulker data after opening the shulker box
-        // LastShulker.updateShulkerData();
-        // LastShulker.showShulkerData();
+
+        SlotClicker.slotRightClick(slot);
+        boolean changed = waitForScreenChange();
+        InventorySaver.Shulker(name).update("Open Shulker Box");
+
+        DEBUG.Slots("Shulker Box: " + name + " Changed: " + changed);
+        return changed;
     }
 
     public static void dropItem(String itemName) {
@@ -584,59 +337,106 @@ public class Tutorial implements ModInitializer {
 
 
     public static void farmRawGold(String unused) {
+        List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t, Market.emeraldToRawGold_t);
         for (int i = 0; i < 999999; i++) {
-            takeItems(Map.of("Raw Gold", 90), "shulker");
+            Map<String, Integer> curInv = InventorySaver.Inventory("Inventory").itemCounts;
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(curInv, trades);
 
-            if (InventorySaver.Shulker("Shulker").emptySlots < 3) {
-                sendItems(Map.of("Shulker", 1), "pv");
-                executeTrade(List.of(Triple.of(Market.rawgoldToBlackBox_t, 1, 1)));
+            takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
+
+            if (InventorySaver.Shulker("Black Shulker").emptySlots < 3) {
+                sendItems(Map.of("Black Shulker", 1), "pv", true);
+                TradeManager.executeTrade(List.of(Triple.of(Market.rawgoldToBlackBox_t, 1, 1)));
             }
 
-            executeTrade(List.of(Triple.of(Market.rawGoldToDiamond_t, 99999, 0)));
-            executeTrade(List.of(Triple.of(Market.diamondToGoldNugget_t, 99999, 0)));
-            executeTrade(List.of(Triple.of(Market.goldNuggetToEmerald_t, 99999, 0)));
-            executeTrade(List.of(Triple.of(Market.emeraldToRawGold_t, 99999, 0)));
+            for(Trade trade: trades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
 
-            sendItems(Map.of("Raw Gold", 1000), "shulker");
+            sendItems(Map.of("Raw Gold", 1000), "Black Shulker", true);
+        }
+    }
+
+    public static void farmGoldBlock(String unused) {
+        List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t);
+        for (int i = 0; i < 999999; i++) {
+            Map<String, Integer> curInv = InventorySaver.Inventory("Inventory").itemCounts;
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(curInv, trades);
+
+            takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
+
+            if (InventorySaver.Shulker("Black Shulker").emptySlots < 3) {
+                sendItems(Map.of("Black Shulker", 1), "pv", true);
+                TradeManager.executeTrade(List.of(Triple.of(Market.rawgoldToBlackBox_t, 1, 1)));
+            }
+
+            for(Trade trade: trades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            int rawGoldInShulker = InventorySaver.Shulker("Black Shulker").getItemCountByName("Raw Gold");
+            if(rawGoldInShulker > inputForSlots){
+                TradeManager.executeTrade( List.of( Triple.of(Market.emeraldToGoldBlock_t, 99999, 0) ));
+            }
+            else {
+                int emerled = TradeManager.calcInputforTradeOutput(inputForSlots, List.of(Market.emeraldToRawGold_t));
+                int clicks = emerled / 64;
+                TradeManager.executeTrade(
+                        List.of(Triple.of(Market.emeraldToRawGold_t, clicks, 0),
+                                Triple.of(Market.emeraldToGoldBlock_t, 99999, 0),
+                                Triple.of(Market.emeraldToRawGold_t, 10, 0)
+                        ));
+            }
+            sendItems(Map.of("Raw Gold", 1000, "Gold Block", 1000), "Black Shulker", true);
         }
     }
 
     public static void buyFullArmors(String unused) {
+        sendItems(Map.of("Black Shulker", 1), "pv", true);
+        if(true) return;
+        sendItems(Map.of("Raw Gold", 1000), "Black Shulker", true);
+        if(true) return;
+        sendItems(Map.of("Raw Gold", 1000), "Black Shulker", true);
+
+        if(true) return;
+        SlotOperations.forceTakeFromShulker(Map.of("Raw Gold", 200), "Black Shulker");
+        //DEBUG.Slots("" +  sendItems(Map.of("Raw Gold", 200), "pv", false));
+        //DEBUG.Slots("" +  takeItems(Map.of("Black Shulker", 1), "pv", false));
+        if(true) return;
+
         openInventory("");
         TreeNode mainItem = Market.swords_P1;
 
-        Map<String, Integer> materialNeeded = getMaterialNeeded(mainItem);
+        Map<String, Integer> materialNeeded = TradeManager.getMaterialNeeded(mainItem);
         Map<String, Integer> transferMap = new HashMap<>();
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) transferMap.put(entry.getKey(), 9999);
-        sendItems(transferMap, "pv");
-        DEBUG.Store("Material Needed:" + materialNeeded);
-        DEBUG.Store("Material we have: " + InventorySaver.PV("pv 1").itemCounts);
+        sendItems(transferMap, "pv", true);
+        //DEBUG.Store("Material Needed:" + materialNeeded);
+        //DEBUG.Store("Material we have: " + InventorySaver.PV("pv 1").itemCounts);
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) {
             String itemName = entry.getKey();
             int itemAmount = entry.getValue();
             int amountNeeded = itemAmount - InventorySaver.PV("pv 1").getItemCountByName(itemName);
             while (amountNeeded > 0) {
-                DEBUG.Store("Amount Needed: " + amountNeeded);
+                //DEBUG.Store("Amount Needed: " + amountNeeded);
                 List<Trade> tradePath = pathFromItemToItem("Raw Gold", itemName);
                 int emptySlots = InventorySaver.Shulker("Shulker").emptySlots;
-                int rawGoldInput = Math.min(maxInputForSlots(InventorySaver.Inventory("Inventory").itemCounts, tradePath), calculateInputNeeded(amountNeeded, tradePath));
-                DEBUG.Store("Raw Gold Needed: " + rawGoldInput);
-                takeItems(Map.of("", 0), "Shulker");
+                int rawGoldInput = Math.min(TradeManager.calcMaxTradeInputForInventory(InventorySaver.Inventory("Inventory").itemCounts, tradePath), TradeManager.calcInputforTradeOutput(amountNeeded, tradePath));
+                //DEBUG.Store("Raw Gold Needed: " + rawGoldInput);
+                takeItems(Map.of("", 0), "Shulker", true);
                 if (InventorySaver.Shulker("Shulker").filledSlots == 0){
                     dropItem("Shulker");
-                    takeItems(Map.of("Shulker", 1), "pv");
+                    takeItems(Map.of("Shulker", 1), "pv", true);
                 }
                 int rawGoldWeHave = InventorySaver.Inventory("Inventory").getItemCountByName("Raw Gold");
-                takeItems(Map.of("Raw Gold", rawGoldInput - rawGoldWeHave), "Shulker");
+                takeItems(Map.of("Raw Gold", rawGoldInput - rawGoldWeHave), "Shulker", true);
 //                DEBUG.Store("Trade path Size: "  + tradePath.size());
                 for (Trade trade : tradePath)
-                    executeTrade(List.of(Triple.of(trade, 999999, 0)));
-                sendItems(Map.of(itemName, 9999), "pv");
+                    TradeManager.executeTrade(List.of(Triple.of(trade, 999999, 0)));
+                sendItems(Map.of(itemName, 9999), "pv", true);
                 amountNeeded = itemAmount - InventorySaver.PV("PV 1").getItemCountByName(itemName);
             }
         }
 
-        takeItems(materialNeeded, "pv");
+        takeItems(materialNeeded, "pv", true);
 
         // lop on armors_p1 and execute all it's trades:
         for (TreeNode child : mainItem.children) {
@@ -644,7 +444,7 @@ public class Tutorial implements ModInitializer {
             for (Trade trade : child.trades) {
                 list.add(Triple.of(trade, 1, 1));
             }
-            executeTrade(list);
+            TradeManager.executeTrade(list);
         }
     }
 
