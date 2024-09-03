@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
+import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.indexes.Indexes;
 import net.omar.tutorial.last.InventorySaver;
 import org.slf4j.Logger;
@@ -73,9 +74,9 @@ public class SlotOperations {
 
     }
 
-    public static void showAllTrades(){
+    public static void showAllTrades() {
         List<TradeOffer> offers = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().getRecipes();
-        for(int i = 0; i < offers.size(); i++){
+        for (int i = 0; i < offers.size(); i++) {
             TradeOffer offer = offers.get(i);
 
             // Get the first buy item details
@@ -98,13 +99,14 @@ public class SlotOperations {
         }
 
     }
+
     public static int getSlotIndexContainsName(String itemName) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) return -1;
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
-        if(slots == null) return -1;
+        if (slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
-            if(slots.get(i).getStack().getName().getString().contains(itemName)) return i;
+            if (slots.get(i).getStack().getName().getString().contains(itemName)) return i;
         return -1;
     }
 
@@ -113,7 +115,7 @@ public class SlotOperations {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) return -1;
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
-        if(slots == null) return -1;
+        if (slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
             if (slots.get(i).getStack().getName().getString().equals(itemName)) return i;
         return -1;
@@ -123,7 +125,7 @@ public class SlotOperations {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) return -1;
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
-        if(slots == null) return -1;
+        if (slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
             if (containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) return i;
         return -1;
@@ -155,7 +157,7 @@ public class SlotOperations {
         return slots != null && !slots.get(index).hasStack();
     }
 
-    public static int getFirstEmptySlot(List<Integer> indexes) {
+    public static int getIndexFirstEmptySlot(List<Integer> indexes) {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return -1;
 
@@ -196,12 +198,12 @@ public class SlotOperations {
         }
     }
 
-    public static boolean transferItems(Map<String, Integer> itemAmounts, List<Integer> sourceIndexes, List<Integer> targetIndexes) {
+    public static Map<String, Integer> transferItems(Map<String, Integer> itemAmounts, List<Integer> sourceIndexes, List<Integer> targetIndexes) {
         DefaultedList<Slot> slots = getSlots();
-        if (slots == null) return false;
 
         Map<String, Integer> remainingAmounts = new HashMap<>(itemAmounts);
 
+        if (slots == null) return remainingAmounts;
         for (int sourceIndex : sourceIndexes) {
             Slot sourceSlot = slots.get(sourceIndex);
             if (!sourceSlot.hasStack()) continue;
@@ -214,11 +216,11 @@ public class SlotOperations {
 
                 int toTransfer = Math.min(entry.getValue(), sourceSlot.getStack().getCount());
                 if (toTransfer == sourceSlot.getStack().getCount()) {
-                    SlotClicker.slotShiftLeftClick(sourceIndex);
+                    moveCompleteItem(sourceIndex, targetIndexes);
                 } else {
                     SlotClicker.slotNormalClick(sourceIndex);
-                    int targetIndex = getFirstEmptySlot(targetIndexes);
-                    if (targetIndex == -1) return false;
+                    int targetIndex = getIndexFirstEmptySlot(targetIndexes);
+                    if (targetIndex == -1) return remainingAmounts;
                     for (int i = 0; i < toTransfer; i++) SlotClicker.slotRightClick(targetIndex);
                     SlotClicker.slotNormalClick(sourceIndex);
                 }
@@ -228,80 +230,120 @@ public class SlotOperations {
             }
         }
 
-        return remainingAmounts.values().stream().allMatch(v -> v <= 0);
+        return remainingAmounts;
     }
 
 
-    public static boolean sendItems(Map<String, Integer> itemAmounts, String targetContainer) {
-        boolean result = false;
+    public static void moveCompleteItem(int sourceIndex, List<Integer> targetIndexes) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return;
+
+        Slot sourceSlot = slots.get(sourceIndex);
+        if (!sourceSlot.hasStack()) return;
+
+        int sourceAmount = sourceSlot.getStack().getCount();
+        String sourceName = getSlotNameByIndex(sourceIndex);
+
+        SlotClicker.slotNormalClick(sourceIndex);
+
+
+        if (NameConverter.isStackedItem(sourceName)) {
+
+            for (int targetIndex : targetIndexes) {
+                if (getSlotNameByIndex(targetIndex).equals(sourceName)) {
+                    int targetAmount = getElementAmountByIndex(targetIndex);
+                    if (targetAmount < 64) {
+                        int transferAmount = Math.min(64 - targetAmount, sourceAmount);
+                        SlotClicker.slotNormalClick(targetIndex);
+                        sourceAmount -= transferAmount;
+                        if (sourceAmount == 0) return;
+                    }
+                }
+            }
+        }
+
+        int emptySlotIndex = getIndexFirstEmptySlot(targetIndexes);
+        if (emptySlotIndex != -1) {
+            SlotClicker.slotNormalClick(emptySlotIndex);
+        }
+    }
+
+    public static Map<String, Integer> sendItems(Map<String, Integer> itemAmounts, String targetContainer, boolean front) {
+        Map<String, Integer> result = itemAmounts;
         List<Integer> sourceIndexes = null;
         List<Integer> targetIndexes = null;
 
-        switch (targetContainer.toLowerCase()) {
-            case "pv":
-                openPV1("");
-                sourceIndexes = Indexes.PV.TOTAL_INVENTORY;
-                targetIndexes = Indexes.PV.PV;
-                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                InventorySaver.PV("pv 1").update("Send Item To PV");
-                closeScreen();
-                break;
-
-            case "shulker":
-                openShulkerBox("Shulker");
-                sourceIndexes = Indexes.Shulker.TOTAL_INVENTORY;
-                targetIndexes = Indexes.Shulker.SHULKER_BOX;
-                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                InventorySaver.Shulker("Shulker").update("Send Item To Shulker");
-                closeScreen();
-                break;
-
-            case "enderchest":
-                LOGGER.error("EnderChest not implemented yet");
-                break;
-
-            default:
-                LOGGER.error("Invalid target container specified");
-                break;
+        if (SlotOperations.containsIgnoreCase(targetContainer, "Shulker")) {
+            if (!openShulkerBox(targetContainer)) return result;
+            sourceIndexes = Indexes.Shulker.TOTAL_INVENTORY;
+            targetIndexes = (front ? Indexes.Shulker.SHULKER_BOX : Indexes.Shulker.SHULKER_BOX_REVERSE);
+            result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+            InventorySaver.Shulker(targetContainer).update("Send Item");
+            closeScreen();
+        } else if (SlotOperations.containsIgnoreCase(targetContainer, "pv")) {
+            if (!openPV1("")) return result;
+            sourceIndexes = Indexes.PV.TOTAL_INVENTORY;
+            targetIndexes = (front ? Indexes.PV.PV : Indexes.PV.PV_REVERSE);
+            result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+            InventorySaver.PV(targetContainer).update("Send Item");
+            closeScreen();
+        } else if (SlotOperations.containsIgnoreCase(targetContainer, "enderchest")) {
+            LOGGER.error("EnderChest not implemented yet");
+        } else {
+            LOGGER.error("Invalid target container specified");
         }
+        return result;
+    }
+
+    public static Map<String, Integer> takeItems(Map<String, Integer> itemAmounts, String sourceContainer, boolean front) {
+        Map<String, Integer> result = itemAmounts;
+        List<Integer> sourceIndexes = null;
+        List<Integer> targetIndexes = null;
+
+        if (SlotOperations.containsIgnoreCase(sourceContainer, "Shulker")) {
+            if (!openShulkerBox(sourceContainer)) return result;
+            sourceIndexes = (front ? Indexes.Shulker.SHULKER_BOX : Indexes.Shulker.SHULKER_BOX_REVERSE);
+            targetIndexes = Indexes.Shulker.TOTAL_INVENTORY;
+            result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+            InventorySaver.Shulker(sourceContainer).update("Take Item");
+            closeScreen();
+        } else if (SlotOperations.containsIgnoreCase(sourceContainer, "pv")) {
+            if (!openPV1("")) return result;
+            sourceIndexes = (front ? Indexes.PV.PV : Indexes.PV.PV_REVERSE);
+            targetIndexes = Indexes.PV.MAIN_INVENTORY;
+            result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
+            InventorySaver.PV(sourceContainer).update("Take Item");
+            closeScreen();
+        } else if (SlotOperations.containsIgnoreCase(sourceContainer, "enderchest")) {
+            LOGGER.error("EnderChest not implemented yet");
+        } else {
+            LOGGER.error("Invalid source container specified");
+        }
+
 
         return result;
     }
 
-    public static boolean takeItems(Map<String, Integer> itemAmounts, String sourceContainer) {
-        boolean result = false;
-        List<Integer> sourceIndexes = null;
-        List<Integer> targetIndexes = null;
+    public static boolean isEmptyMap(Map<String, Integer> mp) {
+        for (Map.Entry<String, Integer> entry : mp.entrySet())
+            if (entry.getValue() != 0) return false;
+        return true;
+    }
 
-        switch (sourceContainer.toLowerCase()) {
-            case "pv":
-                openPV1("");
-                sourceIndexes = Indexes.PV.PV;
-                targetIndexes = Indexes.PV.MAIN_INVENTORY;
-                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                InventorySaver.PV("pv 1").update("Take Item");
-                closeScreen();
-                break;
+    public static void forceTakeFromShulker(Map<String, Integer> itemAmounts, String shulkerName) {
+        openPV1("");
+        closeScreen();
 
-            case "shulker":
-                openShulkerBox("Shulker");
-                sourceIndexes = Indexes.Shulker.SHULKER_BOX;
-                targetIndexes = Indexes.Shulker.TOTAL_INVENTORY;
-                result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-                InventorySaver.Shulker("Shulker").update("Take Item");
-                closeScreen();
-                break;
+        Map<String, Integer> remainingItems = new HashMap<>(itemAmounts);
 
-            case "enderchest":
-                LOGGER.error("EnderChest not implemented yet");
-                break;
+        remainingItems = takeItems(remainingItems, shulkerName, false);
 
-            default:
-                LOGGER.error("Invalid source container specified");
-                break;
+        if (!isEmptyMap(remainingItems)) {
+            sendItems(Map.of(shulkerName, 1), "pv", false);
+            if (!isEmptyMap(takeItems(Map.of(shulkerName, 1), "pv", true))) return;
+            forceTakeFromShulker(remainingItems, shulkerName);
         }
-
-        return result;
+        return;
     }
 
     public static boolean isShulkerFull(String shulkerName) {
