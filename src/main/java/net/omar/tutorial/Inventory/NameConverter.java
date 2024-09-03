@@ -11,7 +11,7 @@ import static net.omar.tutorial.Tutorial.LOGGER;
 public class NameConverter {
 
     private static final Map<String, String> wordsMap = new HashMap<>();
-    private static final String[] STACKABLE_KEYWORDS = {"sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots"};
+    private static final String[] STACKABLE_KEYWORDS = {"sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker"};
 
     static {
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɢᴏʟᴅ", "Raw Gold");
