@@ -43,7 +43,7 @@ public class SlotOperations {
         return true;
     }
 
-    private static DefaultedList<Slot> getSlots() {
+    public static DefaultedList<Slot> getSlots() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) {
             LOGGER.error("No screen found");
@@ -215,16 +215,7 @@ public class SlotOperations {
                 if (entry.getValue() == 0 || !containsIgnoreCase(itemName, entry.getKey())) continue;
 
                 int toTransfer = Math.min(entry.getValue(), sourceSlot.getStack().getCount());
-                if (toTransfer == sourceSlot.getStack().getCount()) {
-                    moveCompleteItem(sourceIndex, targetIndexes);
-                } else {
-                    SlotClicker.slotNormalClick(sourceIndex);
-                    int targetIndex = getIndexFirstEmptySlot(targetIndexes);
-                    if (targetIndex == -1) return remainingAmounts;
-                    for (int i = 0; i < toTransfer; i++) SlotClicker.slotRightClick(targetIndex);
-                    SlotClicker.slotNormalClick(sourceIndex);
-                }
-
+                moveCompleteItem(sourceIndex, targetIndexes, toTransfer);
                 entry.setValue(entry.getValue() - toTransfer);
                 break;
             }
@@ -233,8 +224,64 @@ public class SlotOperations {
         return remainingAmounts;
     }
 
+    public static int getSlotToComplete(String itemName, List<Integer> targetIndexes) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return -1;
+
+        if(NameConverter.isStackedItem(itemName)) {
+            for(int i: targetIndexes) {
+                String name = slots.get(i).getStack().getItem().getName().getString();
+                int amount = slots.get(i).getStack().getCount();
+                if(containsIgnoreCase(name, itemName) && amount < 64) return i;
+            }
+        }
+
+        for(int i: targetIndexes)
+            if(!slots.get(i).hasStack()) return i;
+
+        return -1;
+    }
 
     public static void moveCompleteItem(int sourceIndex, List<Integer> targetIndexes) {
+        int amount = getElementAmountByIndex(sourceIndex);
+        moveCompleteItem(sourceIndex, targetIndexes, amount);
+    }
+
+
+    public static void moveCompleteItem(int sourceIndex, List<Integer> targetIndexes, int amount) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return;
+
+        Slot sourceSlot = slots.get(sourceIndex);
+        if (!sourceSlot.hasStack()) return;
+
+        int sourceAmount = sourceSlot.getStack().getCount();
+        String sourceName = getSlotNameByIndex(sourceIndex);
+
+        SlotClicker.slotNormalClick(sourceIndex);
+
+        while(sourceAmount > 0 && amount > 0) {
+            int targetIndex = getSlotToComplete(sourceName, targetIndexes);
+            if (targetIndex == -1) return;
+            int availableAmountSpace = 64 - getElementAmountByIndex(targetIndex);
+            int transferAmount = Math.min(availableAmountSpace, Math.min(sourceAmount, amount));
+            if(Math.min(availableAmountSpace, sourceAmount) <= amount) {
+                SlotClicker.slotNormalClick(targetIndex);
+            }
+            else  {
+                for (int i = 0; i < transferAmount; i++)
+                    SlotClicker.slotRightClick(targetIndex);
+            }
+            sourceAmount -= transferAmount;
+            amount -= transferAmount;
+        }
+
+        if(sourceAmount > 0)
+            SlotClicker.slotNormalClick(sourceIndex);
+    }
+
+    // another fucntion that  move complete certain item amount
+    public static void moveCompleteItemAmount(int sourceIndex, List<Integer> targetIndexes, int amount) {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return;
 
@@ -248,7 +295,6 @@ public class SlotOperations {
 
 
         if (NameConverter.isStackedItem(sourceName)) {
-
             for (int targetIndex : targetIndexes) {
                 if (getSlotNameByIndex(targetIndex).equals(sourceName)) {
                     int targetAmount = getElementAmountByIndex(targetIndex);
@@ -267,6 +313,7 @@ public class SlotOperations {
             SlotClicker.slotNormalClick(emptySlotIndex);
         }
     }
+
 
     public static Map<String, Integer> sendItems(Map<String, Integer> itemAmounts, String targetContainer, boolean front) {
         Map<String, Integer> result = itemAmounts;
