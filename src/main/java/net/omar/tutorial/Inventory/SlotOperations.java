@@ -24,6 +24,7 @@ public class SlotOperations {
 
     public static boolean containsIgnoreCase(String str, String searchStr) {
         if (str == null || searchStr == null) return false;
+        //LOGGER.info("Checking if " + str + " contains " + searchStr);
 
         // Split the string between each lowercase and uppercase letter
         //DEBUG.Store("Original String: " + searchStr);
@@ -35,11 +36,18 @@ public class SlotOperations {
         String lowerStr = str.toLowerCase();
 
         // Check if each word in the search string is contained in the main string
+        String debugString = "Words to search: ";
+        //for (String word : wordsToSearch) debugString += word + " ";
+        //debugString += " In: " + lowerStr;
+        //DEBUG.Shulker(debugString);
         for (String word : wordsToSearch) {
+            //LOGGER.info("Checking for word: " + word);
             if (!lowerStr.contains(word)) {
+                //DEBUG.Shulker("Word not found: " + word);
                 return false;
             }
         }
+        //DEBUG.Shulker("Word found");
         return true;
     }
 
@@ -106,7 +114,7 @@ public class SlotOperations {
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
         if (slots == null) return -1;
         for (int i = 0; i < slots.size(); i++)
-            if (slots.get(i).getStack().getName().getString().contains(itemName)) return i;
+            if (slots.get(i).getStack().getItem().getName().getString().contains(itemName)) return i;
         return -1;
     }
 
@@ -337,7 +345,7 @@ public class SlotOperations {
         } else if (SlotOperations.containsIgnoreCase(targetContainer, "enderchest")) {
             LOGGER.error("EnderChest not implemented yet");
         } else {
-            LOGGER.error("Invalid target container specified");
+            LOGGER.error("Invalid target container specified" + targetContainer);
         }
         return result;
     }
@@ -364,7 +372,7 @@ public class SlotOperations {
         } else if (SlotOperations.containsIgnoreCase(sourceContainer, "enderchest")) {
             LOGGER.error("EnderChest not implemented yet");
         } else {
-            LOGGER.error("Invalid source container specified");
+            LOGGER.error("Invalid source container specified" + sourceContainer);
         }
 
 
