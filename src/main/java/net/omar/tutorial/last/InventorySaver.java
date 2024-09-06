@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.omar.tutorial.Tutorial.closeScreen;
+import static net.omar.tutorial.Tutorial.openInventory;
+
 public class InventorySaver {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
@@ -73,6 +76,7 @@ abstract class InventoryEntry {
     public int emptySlots;
     public final Map<String, Integer> itemCounts = new HashMap<>();
     public final Map<Integer, ItemSlotInfo> slotData = new HashMap<>();
+    public boolean isUpdated = false;
 
     protected InventoryEntry(String name) {
         this.name = name;
