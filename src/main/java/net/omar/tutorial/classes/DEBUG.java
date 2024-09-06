@@ -69,4 +69,8 @@ public class DEBUG {
     public static void Error(String message) {
         writeToFile("Error.txt", message);
     }
+
+    public static void Shulker(String message) {
+        writeToFile("Shulker.txt", message);
+    }
 }
