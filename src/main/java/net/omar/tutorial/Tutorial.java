@@ -12,7 +12,9 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
 import net.omar.tutorial.Inventory.SlotClicker;
 import net.omar.tutorial.Inventory.SlotOperations;
 import net.omar.tutorial.Managers.TradeManager;
@@ -20,7 +22,10 @@ import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.classes.TreeNode;
 import net.omar.tutorial.indexes.Market;
+import net.omar.tutorial.indexes.ShulkerBoxStorage;
 import net.omar.tutorial.last.InventorySaver;
+import net.omar.tutorial.last.MyInventory;
+import net.omar.tutorial.last.MyPV;
 import org.apache.commons.lang3.tuple.Triple;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -32,7 +37,7 @@ import java.util.function.Consumer;
 
 import static net.omar.tutorial.Inventory.SlotOperations.sendItems;
 import static net.omar.tutorial.Inventory.SlotOperations.takeItems;
-import static net.omar.tutorial.classes.TreeNode.pathFromItemToItem;
+import static net.omar.tutorial.classes.TreeNode.shortPathFromItemToItem;
 
 
 public class Tutorial implements ModInitializer {
@@ -77,6 +82,11 @@ public class Tutorial implements ModInitializer {
         registerCustomCommand("!random", Tutorial::sendRandomChatMessage);
         registerCustomCommand("!shop", TradeManager::openShop);
         registerCustomCommand("!pv", Tutorial::openPV1);
+
+        registerCustomCommand("!rawGold", Tutorial::farmRawGold);
+        registerCustomCommand("!goldBlock", Tutorial::farmGoldBlock);
+        registerCustomCommand("!goldIngot", Tutorial::farmGoldIngot);
+        registerCustomCommand("!goldNugget", Tutorial::farmGoldNugget);
         //registerCustomCommand("!test", Tutorial::testFunction);
     }
 
@@ -103,6 +113,8 @@ public class Tutorial implements ModInitializer {
                     try {
                         entry.getValue().accept("");
                     } catch (Exception e) {
+                        DEBUG.Error("Thread interrupted"  + e.getMessage());
+                        LOGGER.error("Thread interrupted", e);
                         Thread.currentThread().interrupt();
                     }
                 });
@@ -156,6 +168,8 @@ public class Tutorial implements ModInitializer {
                         try {
                             action.accept("");
                         } catch (Exception e) {
+                            DEBUG.Error("Thread interrupted"  + e.getMessage());
+                            LOGGER.error("Thread interrupted", e);
                             Thread.currentThread().interrupt();
                         }
                     });
@@ -296,7 +310,7 @@ public class Tutorial implements ModInitializer {
             MinecraftClient.getInstance().setScreen(new InventoryScreen(client.player));
         });
         boolean changed = waitForScreenChange();
-        InventorySaver.Inventory("Inventory").update("Open Inventory");
+        InventorySaver.Inventory(MyInventory.NAME).update("Open Inventory");
         return changed;
     }
 
@@ -314,6 +328,7 @@ public class Tutorial implements ModInitializer {
         int slot = SlotOperations.getSlotIndexContainsName(name);
         //LOGGER.info("Found " + name + " at slot " + slot);
         if (slot == -1) {
+            LOGGER.error("Shulker Box: " + name + " not found");
             closeScreen();
             return false;
         }
@@ -339,8 +354,7 @@ public class Tutorial implements ModInitializer {
     public static void farmRawGold(String unused) {
         List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t, Market.emeraldToRawGold_t);
         for (int i = 0; i < 999999; i++) {
-            Map<String, Integer> curInv = InventorySaver.Inventory("Inventory").itemCounts;
-            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(curInv, trades);
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(trades);
 
             takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
 
@@ -356,11 +370,32 @@ public class Tutorial implements ModInitializer {
         }
     }
 
+    public static void farmRawGold2(Trade outTrade) {
+        String farmCycleItem = "Raw Gold";
+        List<Trade> trades = TreeNode.farmPathFromItem(farmCycleItem);
+        trades.remove(trades.size() - 1);
+        String shulkerBox = ShulkerBoxStorage.getBoxNameForItem(outTrade);
+        for (int i = 0; i < 999999; i++) {
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(trades);
+
+            takeItems(Map.of(farmCycleItem, inputForSlots), shulkerBox, true);
+
+            if (InventorySaver.Shulker(shulkerBox).emptySlots < 3) {
+                sendItems(Map.of(farmCycleItem, 1), MyPV.PV1, true);
+                TradeManager.executeTrade(List.of(Triple.of(outTrade, 1, 1)));
+            }
+
+            for(Trade trade: trades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            sendItems(Map.of(farmCycleItem, 1000), shulkerBox, true);
+        }
+    }
+
     public static void farmGoldBlock(String unused) {
         List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t);
         for (int i = 0; i < 999999; i++) {
-            Map<String, Integer> curInv = InventorySaver.Inventory("Inventory").itemCounts;
-            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(curInv, trades);
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(trades);
 
             takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
 
@@ -389,44 +424,212 @@ public class Tutorial implements ModInitializer {
         }
     }
 
-    public static void buyFullArmors(String unused) {
-        sendItems(Map.of("Black Shulker", 1), "pv", true);
-        if(true) return;
-        sendItems(Map.of("Raw Gold", 1000), "Black Shulker", true);
-        if(true) return;
-        sendItems(Map.of("Raw Gold", 1000), "Black Shulker", true);
 
-        if(true) return;
-        SlotOperations.forceTakeFromShulker(Map.of("Raw Gold", 200), "Black Shulker");
-        //DEBUG.Slots("" +  sendItems(Map.of("Raw Gold", 200), "pv", false));
-        //DEBUG.Slots("" +  takeItems(Map.of("Black Shulker", 1), "pv", false));
-        if(true) return;
+    public static void farmMaterialIntoShulker(String outputItem, int numberOfShulkers) {
+        if(!outputItem.equals("Raw Gold") && !outputItem.equals("Gold Block") && !outputItem.equals("Gold Nugget") && !outputItem.equals("Gold Ingot")) return;
+        if(numberOfShulkers < 1) return;
+        String cycleItem = "Raw Gold";
+        List<Trade> cycleTrades = new ArrayList<>(TreeNode.farmPathFromItem(cycleItem));
+
+        Trade lastCycleTrade = cycleTrades.remove(cycleTrades.size() - 1);
+        Trade lastOutputTrade = TreeNode.shortPathFromItemToItem(lastCycleTrade.firstItemName, outputItem).get(0);
+
+        String shulker = ShulkerBoxStorage.getBoxNameForItem(lastOutputTrade);
+        Trade shulkerTrade = ShulkerBoxStorage.getTradeFoShulkerBox(shulker);
 
         openInventory("");
+        closeScreen();
+
+        int shulkerFarmedCount = 0;
+
+        for (int i = 0; i < 999999; i++) {
+            int cycleInput = TradeManager.calcMaxTradeInputForInventory(cycleTrades);
+
+            takeItems(Map.of(cycleItem, cycleInput), shulker, true);
+
+            boolean isShulkerFull = InventorySaver.Shulker(shulker).filledSlots > 25;
+            if(isShulkerFull){
+                sendItems(Map.of(shulker, 1), MyPV.PV1, true);
+                shulkerFarmedCount++;
+                if(shulkerFarmedCount >= numberOfShulkers) return;
+            }
+
+            boolean isShulkerExist = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulker) > 0;
+            if(!isShulkerExist) TradeManager.executeTrade(List.of(Triple.of(shulkerTrade, 1, 1)));
+
+            // Execute trade for each item in cycleTrades
+            for (Trade trade : cycleTrades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            int itemsInShulker = InventorySaver.Shulker(shulker).getItemCountByName(cycleItem);
+            if (itemsInShulker > cycleInput) {
+                TradeManager.executeTrade(List.of(Triple.of(lastOutputTrade, 99999, 0)));
+            } else {
+                int preLastInput = TradeManager.calcInputforTradeOutput(cycleInput, List.of(lastCycleTrade));
+                int clicks = preLastInput / lastCycleTrade.firstItemAmount;
+                TradeManager.executeTrade(
+                        List.of(Triple.of(lastCycleTrade, clicks, 0),
+                                Triple.of(lastOutputTrade, 99999, 0),
+                                Triple.of(lastCycleTrade, 10, 0))
+                );
+            }
+
+            sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), shulker, true);
+        }
+    }
+
+
+
+    public static void farmMaterialIntoPV(String outputItem, int amountNeeded) {
+        if(!outputItem.equals("Raw Gold") && !outputItem.equals("Gold Block") && !outputItem.equals("Gold Nugget") && !outputItem.equals("Gold Ingot")) return;
+
+        String cycleItem = "Raw Gold";
+        List<Trade> cycleTrades = new ArrayList<>(TreeNode.farmPathFromItem(cycleItem));
+
+        Trade lastCycleTrade = cycleTrades.remove(cycleTrades.size() - 1);
+        Trade lastOutputTrade = TreeNode.shortPathFromItemToItem(lastCycleTrade.firstItemName, outputItem).get(0);
+
+        String shulker = ShulkerBoxStorage.getBoxNameForItem(lastOutputTrade);
+        Trade shulkerTrade = ShulkerBoxStorage.getTradeFoShulkerBox(shulker);
+
+        sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), MyPV.PV1, true);
+
+        if(InventorySaver.PV(MyPV.PV1).getItemCountByName(cycleItem) < 16) return;
+
+        while(amountNeeded > 0) {
+            int cycleInput = TradeManager.calcMaxTradeInputForInventory(cycleTrades);
+            takeItems(Map.of(cycleItem, cycleInput), MyPV.PV1, true);
+
+            for (Trade trade : cycleTrades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            int itemsInShulker = InventorySaver.Shulker(shulker).getItemCountByName(cycleItem);
+            if (itemsInShulker > cycleInput) {
+                TradeManager.executeTrade(List.of(Triple.of(lastOutputTrade, 99999, 0)));
+            } else {
+                int preLastInput = TradeManager.calcInputforTradeOutput(cycleInput, List.of(lastCycleTrade));
+                int clicks = preLastInput / lastCycleTrade.firstItemAmount;
+                TradeManager.executeTrade(
+                        List.of(Triple.of(lastCycleTrade, clicks, 0),
+                                Triple.of(lastOutputTrade, 99999, 0),
+                                Triple.of(lastCycleTrade, 10, 0))
+                );
+            }
+
+            DEBUG.Shulker("BEFORE :______________________________________________________________");
+            DEBUG.Shulker("Amount Needed: " + amountNeeded);
+            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
+            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
+            amountNeeded -= InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem);
+            DEBUG.Shulker("AFTER :______________________________________________________________");
+            DEBUG.Shulker("Amount Needed: " + amountNeeded);
+            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
+            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
+
+            sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), MyPV.PV1, true);
+        }
+    }
+
+
+    public static void farmGoldIngot(String unused) {
+        List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t);
+        for (int i = 0; i < 999999; i++) {
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(trades);
+
+            takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
+
+            if (InventorySaver.Shulker("Black Shulker").emptySlots < 3) {
+                sendItems(Map.of("Black Shulker", 1), "pv", true);
+                TradeManager.executeTrade(List.of(Triple.of(Market.rawgoldToBlackBox_t, 1, 1)));
+            }
+
+            for(Trade trade: trades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            int rawGoldInShulker = InventorySaver.Shulker("Black Shulker").getItemCountByName("Raw Gold");
+            if(rawGoldInShulker > inputForSlots){
+                TradeManager.executeTrade( List.of( Triple.of(Market.emeraldToGoldIngot_t, 99999, 0) ));
+            }
+            else {
+                int emerled = TradeManager.calcInputforTradeOutput(inputForSlots, List.of(Market.emeraldToRawGold_t));
+                int clicks = emerled / 64;
+                TradeManager.executeTrade(
+                        List.of(Triple.of(Market.emeraldToRawGold_t, clicks, 0),
+                                Triple.of(Market.emeraldToGoldIngot_t, 99999, 0),
+                                Triple.of(Market.emeraldToRawGold_t, 10, 0)
+                        ));
+            }
+            sendItems(Map.of("Raw Gold", 1000, "Gold Block", 1000), "Black Shulker", true);
+        }
+    }
+
+
+    public static void farmGoldNugget(String unused) {
+        List<Trade> trades = List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t);
+        for (int i = 0; i < 999999; i++) {
+            int inputForSlots = TradeManager.calcMaxTradeInputForInventory(trades);
+
+            takeItems(Map.of("Raw Gold", inputForSlots), "Black Shulker", true);
+
+            if (InventorySaver.Shulker("Black Shulker").emptySlots < 3) {
+                sendItems(Map.of("Black Shulker", 1), "pv", true);
+                TradeManager.executeTrade(List.of(Triple.of(Market.rawgoldToBlackBox_t, 1, 1)));
+            }
+
+            for(Trade trade: trades)
+                TradeManager.executeTrade(List.of(Triple.of(trade, 99999, 0)));
+
+            int rawGoldInShulker = InventorySaver.Shulker("Black Shulker").getItemCountByName("Raw Gold");
+            if(rawGoldInShulker > inputForSlots){
+                TradeManager.executeTrade( List.of( Triple.of(Market.emeraldToGoldNugget_t, 99999, 0) ));
+            }
+            else {
+                int emerled = TradeManager.calcInputforTradeOutput(inputForSlots, List.of(Market.emeraldToRawGold_t));
+                int clicks = emerled / 64;
+                TradeManager.executeTrade(
+                        List.of(Triple.of(Market.emeraldToRawGold_t, clicks, 0),
+                                Triple.of(Market.emeraldToGoldNugget_t, 99999, 0),
+                                Triple.of(Market.emeraldToRawGold_t, 10, 0)
+                        ));
+            }
+            sendItems(Map.of("Raw Gold", 1000, "Gold Block", 1000), "Black Shulker", true);
+        }
+    }
+
+
+    public static void buyFullArmors(String unused) {
+        farmMaterialIntoPV("Gold Ingot", 20);
+//        buyItem(Market.swords_P1, 4);
+//        farmAnyThing("Gold Block", 3);
+//        farmAnyThing("Gold Ingot", 2);
+//        farmAnyThing("Gold Nugget", 2);
+//        farmAnyThing("Raw Gold", 1);
+
+        if(true) return;
         TreeNode mainItem = Market.swords_P1;
+        openPV1("");
+        closeScreen();
 
         Map<String, Integer> materialNeeded = TradeManager.getMaterialNeeded(mainItem);
         Map<String, Integer> transferMap = new HashMap<>();
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) transferMap.put(entry.getKey(), 9999);
         sendItems(transferMap, "pv", true);
-        //DEBUG.Store("Material Needed:" + materialNeeded);
-        //DEBUG.Store("Material we have: " + InventorySaver.PV("pv 1").itemCounts);
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet()) {
             String itemName = entry.getKey();
             int itemAmount = entry.getValue();
             int amountNeeded = itemAmount - InventorySaver.PV("pv 1").getItemCountByName(itemName);
             while (amountNeeded > 0) {
                 //DEBUG.Store("Amount Needed: " + amountNeeded);
-                List<Trade> tradePath = pathFromItemToItem("Raw Gold", itemName);
+                List<Trade> tradePath = shortPathFromItemToItem("Raw Gold", itemName);
                 int emptySlots = InventorySaver.Shulker("Shulker").emptySlots;
-                int rawGoldInput = Math.min(TradeManager.calcMaxTradeInputForInventory(InventorySaver.Inventory("Inventory").itemCounts, tradePath), TradeManager.calcInputforTradeOutput(amountNeeded, tradePath));
+                int rawGoldInput = Math.min(TradeManager.calcMaxTradeInputForInventory(tradePath), TradeManager.calcInputforTradeOutput(amountNeeded, tradePath));
                 //DEBUG.Store("Raw Gold Needed: " + rawGoldInput);
                 takeItems(Map.of("", 0), "Shulker", true);
                 if (InventorySaver.Shulker("Shulker").filledSlots == 0){
                     dropItem("Shulker");
                     takeItems(Map.of("Shulker", 1), "pv", true);
                 }
-                int rawGoldWeHave = InventorySaver.Inventory("Inventory").getItemCountByName("Raw Gold");
+                int rawGoldWeHave = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName("Raw Gold");
                 takeItems(Map.of("Raw Gold", rawGoldInput - rawGoldWeHave), "Shulker", true);
 //                DEBUG.Store("Trade path Size: "  + tradePath.size());
                 for (Trade trade : tradePath)
@@ -444,11 +647,36 @@ public class Tutorial implements ModInitializer {
             for (Trade trade : child.trades) {
                 list.add(Triple.of(trade, 1, 1));
             }
+            DEBUG.Shulker("Buying: " + child.name);
             TradeManager.executeTrade(list);
         }
     }
+    
+    public static  void buyItem(Trade trade, int normalClicks){
+        List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
+        trades = List.of(Triple.of(trade, normalClicks, 1));
+        TradeManager.executeTrade(trades);
+    }
 
+    public static  void buyItem(Trade trade, int normalClicks, boolean shiftClick){
+        List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
+        trades = List.of(Triple.of(trade, normalClicks, shiftClick ? 0 : 1));
+        TradeManager.executeTrade(trades);
+    }
 
+    public static void buyItem(TreeNode node, int normalClicks){
+        if(!node.trades.isEmpty()){
+            List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
+            for(Trade trade: node.trades)
+                trades.add(Triple.of(trade, normalClicks, 1));
+            DEBUG.Shulker("Buying: " + trades.toString());
+            TradeManager.executeTrade(trades);
+        }
+        else {
+            for(TreeNode child: node.children)
+                buyItem(child, normalClicks);
+        }
+    }
 }
 
 
