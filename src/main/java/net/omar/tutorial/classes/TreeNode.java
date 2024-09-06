@@ -4,8 +4,7 @@ import net.omar.tutorial.indexes.Market;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Logger;
 
 public class TreeNode {
     public String name;
@@ -69,7 +68,20 @@ public class TreeNode {
         return reversedPath;
     }
 
-    public static List<Trade> pathFromItemToItem(String item1, String item2) {
+    public static List<Trade> shortPathFromItemToItem(String item1, String item2) {
+        //DEBUG.Shulker("shortPathFromItemToItem: " + item1 + " -> " + item2);
+        if(item1.equals("Emerald") && item2.equals("Gold Block"))
+            return List.of(Market.emeraldToGoldBlock_t);
+
+        if(item1.equals("Emerald") && item2.equals("Raw Gold"))
+            return List.of(Market.emeraldToRawGold_t);
+
+        if(item1.equals("Emerald") && item2.equals("Gold Ingot"))
+            return List.of(Market.emeraldToGoldIngot_t);
+
+        if(item1.equals("Emerald") && item2.equals("Gold Nugget"))
+            return List.of(Market.emeraldToGoldNugget_t);
+
 
         if(item2.equals("Gold Block"))
             return List.of(Market.rawGoldToEmerald_t, Market.emeraldToGoldBlock_t);
@@ -82,6 +94,13 @@ public class TreeNode {
 
         if(item2.equals("Raw Gold"))
             return List.of(Market.rawGoldToEmerald_t, Market.emeraldToRawGold_t);
+
+        return new ArrayList<>();
+    }
+
+    public static List<Trade> farmPathFromItem(String Item1){
+        if(Item1.equals("Raw Gold"))
+            return List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t, Market.emeraldToRawGold_t);
 
         return new ArrayList<>();
     }
