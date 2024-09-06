@@ -12,6 +12,7 @@ import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.classes.TreeNode;
 import net.omar.tutorial.indexes.Indexes;
 import net.omar.tutorial.last.InventorySaver;
+import net.omar.tutorial.last.MyInventory;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.*;
@@ -130,7 +131,8 @@ public class TradeManager {
         return initialInput;
     }
 
-    public static int calcMaxTradeInputForInventory(Map<String, Integer> inventory, List<Trade> tradePath) {
+    public static int calcMaxTradeInputForInventory(List<Trade> tradePath) {
+        Map<String, Integer> inventory = InventorySaver.Inventory(MyInventory.NAME).itemCounts;
         int inventoryMaxSlots = 34;
         int input = tradePath.get(0).firstItemAmount;
         if (tradePath.get(0).secondItemAmount > 0 && tradePath.get(0).firstItemName.equals(tradePath.get(0).secondItemName))
@@ -187,11 +189,9 @@ public class TradeManager {
 
                     materialNeeded.put(trade.firstItemName, materialNeeded.getOrDefault(trade.firstItemName, 0) + trade.firstItemAmount);
 
-                    /*
-                    if(trade.secondItemAmount != 0) {
+                    if(trade.secondItemAmount != 0 && NameConverter.isStackedItem(trade.secondItemName)) {
                         materialNeeded.put(trade.secondItemName, materialNeeded.getOrDefault(trade.secondItemName, 0) + trade.secondItemAmount);
                     }
-                     */
                 }
             }
         }
@@ -245,6 +245,7 @@ public class TradeManager {
             if (trade == null) continue;
             makeTrade(trade.TradeIndex - 1, clicks, type);
         }
+        InventorySaver.Inventory(MyInventory.NAME).updateFromTrade();
         Tutorial.closeScreen();
     }
 }
