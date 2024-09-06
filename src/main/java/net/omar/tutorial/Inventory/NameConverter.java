@@ -1,17 +1,12 @@
 package net.omar.tutorial.Inventory;
-import net.omar.tutorial.classes.DEBUG;
 
-import java.io.Console;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
-
-import static net.omar.tutorial.Tutorial.LOGGER;
 
 public class NameConverter {
 
     private static final Map<String, String> wordsMap = new HashMap<>();
-    private static final String[] STACKABLE_KEYWORDS = {"sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker"};
+    private static final String[] NON_STACKABLE_KEYWORDS = {"bow", "sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker", "elytra"};
 
     static {
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɢᴏʟᴅ", "Raw Gold");
@@ -33,13 +28,8 @@ public class NameConverter {
     }
 
     public static boolean isStackedItem(String name) {
-        //LOGGER.info("Checking if " + name + " is stackable");
-        for (String keyword : STACKABLE_KEYWORDS) {
-            if (name.toLowerCase().contains(keyword)) {
-                //LOGGER.info("Yes, " + name + " is stackable");
-                return false;
-            }
-        }
+        for (String keyword : NON_STACKABLE_KEYWORDS)
+            if (name.toLowerCase().contains(keyword)) return false;
         return true;
     }
 }
