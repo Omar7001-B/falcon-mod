@@ -173,6 +173,15 @@ public class TradeManager {
         }
     }
 
+    public static Map<String, Integer> getMaterialNeeded(Trade trade) {
+        Map<String, Integer> materialNeeded = new HashMap<>();
+        materialNeeded.put(trade.firstItemName, trade.firstItemAmount);
+        if (trade.secondItemAmount != 0 && NameConverter.isStackedItem(trade.secondItemName)) {
+            materialNeeded.put(trade.secondItemName, materialNeeded.getOrDefault(trade.secondItemName, 0) + trade.secondItemAmount);
+        }
+        return materialNeeded;
+    }
+
     public static Map<String, Integer> getMaterialNeeded(TreeNode item_p) {
         Map<String, Integer> materialNeeded = new HashMap<>();
         // make queue
@@ -204,6 +213,10 @@ public class TradeManager {
         for (int i = 0; !(Tutorial.client.currentScreen instanceof MerchantScreen) && i < Tutorial.MAX_SCREEN_DELAY; i += Tutorial.SCREENS_DELAY)
             Tutorial.Sleep(Tutorial.SCREENS_DELAY);
         if (!(Tutorial.client.currentScreen instanceof MerchantScreen)) return;
+
+        // make while receipes size is less than offer Index, wait for the screen to update
+        for(int i = 0; ((MerchantScreen) Tutorial.client.currentScreen).getScreenHandler().getRecipes().size() <= offerIndex && i < Tutorial.MAX_SCREEN_DELAY; i += Tutorial.SCREENS_DELAY)
+            Tutorial.Sleep(Tutorial.SCREENS_DELAY);
         TradeOffer offer = ((MerchantScreen) Tutorial.client.currentScreen).getScreenHandler().getRecipes().get(offerIndex);
         boolean isUpgrade = !NameConverter.isStackedItem(offer.getSecondBuyItem().getName().getString());
         int numberOfClicks = Math.min(clicks, calcNumberOfClicks(offer, type));
