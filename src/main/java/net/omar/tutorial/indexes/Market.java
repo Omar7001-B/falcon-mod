@@ -233,7 +233,7 @@ public class Market {
     public static Trade goldBlockToEnchantedGoldAppleII_t = foods_P2.addTrade(new Trade(5, "Gold Block", 64, null, 0, "Enchanted Golden Apple II", 2));
     public static TreeNode pvpUtilitys_P2 = misc_P1.addNode(new TreeNode("ᴘᴠᴘ ᴜᴛɪʟɪᴛɪᴇs"));
     public static Trade goldIngotToObsidian_t = pvpUtilitys_P2.addTrade(new Trade(1, "Gold Ingot", 10, null, 0, "Obsidian", 16));
-    public static Trade goldIngotToEndCrystal_t = pvpUtilitys_P2.addTrade(new Trade(2, "Gold Ingot", 10, "ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɢᴏʟᴅ", 10, "End Crystal", 1));
+    public static Trade goldIngotToEndCrystal_t = pvpUtilitys_P2.addTrade(new Trade(2, "Gold Ingot", 10, "Raw Gold", 10, "End Crystal", 1));
     public static Trade rawgoldToShield_t = pvpUtilitys_P2.addTrade(new Trade(3, "Raw Gold", 6, null, 0, "Shield", 1));
     public static Trade rawgoldToShieldII_t = pvpUtilitys_P2.addTrade(new Trade(4, "Raw Gold", 12, null, 0, "Shield II", 1));
     public static Trade rawgoldToShieldIII_t = pvpUtilitys_P2.addTrade(new Trade(5, "Raw Gold", 32, null, 0, "Shield III", 1));
@@ -252,7 +252,7 @@ public class Market {
     public static Trade rawgoldToShearsII_t = pvpUtilitys_P2.addTrade(new Trade(18, "Raw Gold", 4, null, 0, "Shears II", 1));
     public static Trade rawgoldToShearsIII_t = pvpUtilitys_P2.addTrade(new Trade(19, "Raw Gold", 7, null, 0, "Shears III", 1));
     public static Trade rawgoldToCobweb_t = pvpUtilitys_P2.addTrade(new Trade(20, "Raw Gold", 32, null, 0, "Cobweb", 16));
-    public static Trade goldBlockToTotemofUndying_t = pvpUtilitys_P2.addTrade(new Trade(21, "Gold Block", 64, "ᴄᴏᴍᴘʀᴇssᴇᴅ ɢᴏʟᴅ ʙʟᴏᴄᴋ", 32, "Totem of Undying", 1));
+    public static Trade goldBlockToTotemofUndying_t = pvpUtilitys_P2.addTrade(new Trade(21, "Gold Block", 64, "Gold Block", 32, "Totem of Undying", 1));
 
     public static TreeNode shulkers_P2 = misc_P1.addNode(new TreeNode("sʜᴜʟᴋᴇʀs"));
     public static Trade rawgoldToBox_t = shulkers_P2.addTrade(new Trade(1, "Raw Gold", 3, null, 0, "Box", 1));
