@@ -15,6 +15,7 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
+import net.omar.tutorial.GUI.SimpleButtonScreen;
 import net.omar.tutorial.Inventory.SlotClicker;
 import net.omar.tutorial.Inventory.SlotOperations;
 import net.omar.tutorial.Managers.TradeManager;
@@ -601,6 +602,11 @@ public class Tutorial implements ModInitializer {
 
     public static void buyFullArmors(String unused) {
         //getMaterialAndBuyItem(Market.goldIngotToBowVII_t, 1, "shulker", "inventory");
+        // set screen SimpleButtonScreen
+        MinecraftClient.getInstance().execute(() -> {
+            MinecraftClient.getInstance().setScreen(new SimpleButtonScreen(MinecraftClient.getInstance().currentScreen));
+        });
+        if(true) return;
         getMaterialAndBuyItem(Market.goldNuggetToArrow_t, 20, "shulker", "inventory");
 //        buyItem(Market.swords_P1, 4);
 //        farmAnyThing("Gold Block", 3);
