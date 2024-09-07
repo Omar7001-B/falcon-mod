@@ -425,6 +425,7 @@ public class Tutorial implements ModInitializer {
     }
 
 
+    // -----------------------------  Farming Functions -----------------------------
     public static void farmMaterialIntoShulker(String outputItem, int numberOfShulkers) {
         if(!outputItem.equals("Raw Gold") && !outputItem.equals("Gold Block") && !outputItem.equals("Gold Nugget") && !outputItem.equals("Gold Ingot")) return;
         if(numberOfShulkers < 1) return;
@@ -481,6 +482,7 @@ public class Tutorial implements ModInitializer {
 
 
     public static void farmMaterialIntoPV(String outputItem, int amountNeeded) {
+        // Requirements : Player should have at least 16 of the output item in his PV
         if(!outputItem.equals("Raw Gold") && !outputItem.equals("Gold Block") && !outputItem.equals("Gold Nugget") && !outputItem.equals("Gold Ingot")) return;
 
         String cycleItem = "Raw Gold";
@@ -516,15 +518,15 @@ public class Tutorial implements ModInitializer {
                 );
             }
 
-            DEBUG.Shulker("BEFORE :______________________________________________________________");
-            DEBUG.Shulker("Amount Needed: " + amountNeeded);
-            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
-            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
+//            DEBUG.Shulker("BEFORE :______________________________________________________________");
+//            DEBUG.Shulker("Amount Needed: " + amountNeeded);
+//            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
+//            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
             amountNeeded -= InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem);
-            DEBUG.Shulker("AFTER :______________________________________________________________");
-            DEBUG.Shulker("Amount Needed: " + amountNeeded);
-            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
-            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
+//            DEBUG.Shulker("AFTER :______________________________________________________________");
+//            DEBUG.Shulker("Amount Needed: " + amountNeeded);
+//            DEBUG.Shulker("Amount in Inventory: " + InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem));
+//            DEBUG.Shulker("Amount in PV: " + InventorySaver.PV(MyPV.PV1).getItemCountByName(outputItem));
 
             sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), MyPV.PV1, true);
         }
@@ -598,7 +600,8 @@ public class Tutorial implements ModInitializer {
 
 
     public static void buyFullArmors(String unused) {
-        farmMaterialIntoPV("Gold Ingot", 20);
+        //getMaterialAndBuyItem(Market.goldIngotToBowVII_t, 1, "shulker", "inventory");
+        getMaterialAndBuyItem(Market.goldNuggetToArrow_t, 20, "shulker", "inventory");
 //        buyItem(Market.swords_P1, 4);
 //        farmAnyThing("Gold Block", 3);
 //        farmAnyThing("Gold Ingot", 2);
@@ -675,6 +678,54 @@ public class Tutorial implements ModInitializer {
         else {
             for(TreeNode child: node.children)
                 buyItem(child, normalClicks);
+        }
+    }
+
+    public static void getMaterialAndBuyItem(Trade trade, int count,  String source, String destination){
+        Map<String, Integer> materialNeeded = TradeManager.getMaterialNeeded(trade);
+
+        for (Map.Entry<String, Integer> entry : materialNeeded.entrySet())
+            materialNeeded.put(entry.getKey(), entry.getValue() * count);
+
+        DEBUG.Shulker("Trade: " + trade.toString());
+        DEBUG.Shulker("Material Needed: " + materialNeeded.toString());
+
+        if(destination.toLowerCase().contains("shulker"))
+            materialNeeded.put("Raw Gold", materialNeeded.getOrDefault("Raw Gold", 0) + 3);
+
+
+        if(source.toLowerCase().contains("farm")){
+            for(Map.Entry<String, Integer> entry: materialNeeded.entrySet())
+                farmMaterialIntoPV(entry.getKey(), entry.getValue());
+
+            for(Map.Entry<String, Integer> entry: materialNeeded.entrySet())
+                takeItems(Map.of(entry.getKey(), entry.getValue()), "pv", false);
+        }
+        else if(source.toLowerCase().contains("pv")){
+            takeItems(materialNeeded, "pv", false);
+        }
+        else if(source.toLowerCase().contains("shulker")){
+            for(Map.Entry<String, Integer> entry: materialNeeded.entrySet()){
+                String shulker = ShulkerBoxStorage.getBoxNameForItem(entry.getKey());
+                takeItems(Map.of(shulker, 1), "pv", true);
+                takeItems(Map.of(entry.getKey(), entry.getValue()), shulker, false);
+                sendItems(Map.of(shulker, 1), "pv", true);
+            }
+        }
+
+        buyItem(trade, count);
+
+        if(destination.toLowerCase().contains("inventory")){
+
+        }
+        else if(destination.toLowerCase().contains("pv")){
+            sendItems(Map.of(trade.resultName, count), "pv", true);
+        }
+        else if(destination.toLowerCase().contains("shulker")){
+            String shulker = ShulkerBoxStorage.getBoxNameForItem(trade);
+            Trade shulkerTrade = ShulkerBoxStorage.getTradeFoShulkerBox(shulker);
+            buyItem(shulkerTrade, 1);
+            sendItems(Map.of(trade.resultName, count), shulker, true);
         }
     }
 }
