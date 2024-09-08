@@ -22,6 +22,13 @@ public class ShulkerBoxStorage {
         itemToShulker.put("Gold Ingot", "Brown Shulker Box");
         itemToShulker.put("Gold Block", "Red Shulker Box");
 
+        // Add individual tool types with corresponding box color
+        itemToShulker.put("Sword", "Light Gray Shulker Box");
+        itemToShulker.put("Pickaxe", "Light Gray Shulker Box");
+        itemToShulker.put("Axe", "Light Gray Shulker Box");
+        itemToShulker.put("Shears", "Light Gray Shulker Box");
+        itemToShulker.put("Bow", "Light Gray Shulker Box");
+
         // Add individual armor types with corresponding box color
         itemToShulker.put("Helmet", "Gray Shulker Box");
         itemToShulker.put("Chestplate", "Gray Shulker Box");
@@ -29,18 +36,12 @@ public class ShulkerBoxStorage {
         itemToShulker.put("Boots", "Gray Box");
         itemToShulker.put("Elytra", "Gray Shulker Box");
 
-        // Add individual tool types with corresponding box color
-        itemToShulker.put("Sword", "Light Gray Shulker Box");
-        itemToShulker.put("Pickaxe", "Light Gray Shulker Box");
-        itemToShulker.put("Axe", "Light Gray Shulker Box");
-        itemToShulker.put("Shovel", "Light Gray Shulker Box");
-        itemToShulker.put("Bow", "Light Gray Shulker Box");
 
         // Add remaining items
         itemToShulker.put("Cobweb", "Cyan Shulker Box");
         itemToShulker.put("Potion", "Magenta Shulker Box");
         itemToShulker.put("Golden Apple", "Lime Shulker Box");
-        itemToShulker.put("Totems", "Pink Shulker Box");
+        itemToShulker.put("Totem", "Pink Shulker Box");
         itemToShulker.put("Trash", "Black Shulker Box");
 
     }
@@ -56,7 +57,7 @@ public class ShulkerBoxStorage {
             if(key.equalsIgnoreCase(itemName))
                 return itemToShulker.get(key);
         }
-        return "Black Box";
+        return "Black Shulker Box";
     }
 
     public static String getTypeForShulkerBox(String shulkerBoxName) {
