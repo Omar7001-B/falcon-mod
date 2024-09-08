@@ -7,8 +7,12 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.classes.DEBUG;
+import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.indexes.Indexes;
+import net.omar.tutorial.indexes.ShulkerBoxStorage;
 import net.omar.tutorial.last.InventorySaver;
+import net.omar.tutorial.last.MyInventory;
+import net.omar.tutorial.last.MyPV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,8 +117,11 @@ public class SlotOperations {
         if (client.currentScreen == null) return -1;
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
         if (slots == null) return -1;
-        for (int i = 0; i < slots.size(); i++)
+        //DEBUG.Store("Item We Search: " + itemName);
+        for (int i = 0; i < slots.size(); i++){
+            //DEBUG.Store("Item In Slot: " + slots.get(i).getStack().getItem().getName().getString());
             if (slots.get(i).getStack().getItem().getName().getString().contains(itemName)) return i;
+        }
         return -1;
     }
 
@@ -223,8 +230,8 @@ public class SlotOperations {
                 if (entry.getValue() == 0 || !containsIgnoreCase(itemName, entry.getKey())) continue;
 
                 int toTransfer = Math.min(entry.getValue(), sourceSlot.getStack().getCount());
-                moveCompleteItem(sourceIndex, targetIndexes, toTransfer);
-                entry.setValue(entry.getValue() - toTransfer);
+                int actualTransfer = toTransfer - moveCompleteItem(sourceIndex, targetIndexes, toTransfer);
+                entry.setValue(entry.getValue() - actualTransfer);
                 break;
             }
         }
@@ -256,12 +263,12 @@ public class SlotOperations {
     }
 
 
-    public static void moveCompleteItem(int sourceIndex, List<Integer> targetIndexes, int amount) {
+    public static int moveCompleteItem(int sourceIndex, List<Integer> targetIndexes, int amount) {
         DefaultedList<Slot> slots = getSlots();
-        if (slots == null) return;
+        if (slots == null) return amount;
 
         Slot sourceSlot = slots.get(sourceIndex);
-        if (!sourceSlot.hasStack()) return;
+        if (!sourceSlot.hasStack()) return amount;
 
         int sourceAmount = sourceSlot.getStack().getCount();
         String sourceName = getSlotNameByIndex(sourceIndex);
@@ -270,7 +277,7 @@ public class SlotOperations {
 
         while(sourceAmount > 0 && amount > 0) {
             int targetIndex = getSlotToComplete(sourceName, targetIndexes);
-            if (targetIndex == -1) return;
+            if (targetIndex == -1) return amount;
             int availableAmountSpace = 64 - getElementAmountByIndex(targetIndex);
             int transferAmount = Math.min(availableAmountSpace, Math.min(sourceAmount, amount));
             if(Math.min(availableAmountSpace, sourceAmount) <= amount) {
@@ -286,6 +293,8 @@ public class SlotOperations {
 
         if(sourceAmount > 0)
             SlotClicker.slotNormalClick(sourceIndex);
+
+        return amount;
     }
 
     // another fucntion that  move complete certain item amount
@@ -324,9 +333,13 @@ public class SlotOperations {
 
 
     public static Map<String, Integer> sendItems(Map<String, Integer> itemAmounts, String targetContainer, boolean front) {
-        Map<String, Integer> result = itemAmounts;
+        DEBUG.Shulker("Material to send: " + itemAmounts + " to " + targetContainer);
+        Map<String, Integer> result = new LinkedHashMap<>(itemAmounts);
         List<Integer> sourceIndexes = null;
         List<Integer> targetIndexes = null;
+
+        if(isEmptyMap(itemAmounts)) return result;
+
 
         if (SlotOperations.containsIgnoreCase(targetContainer, "Shulker")) {
             if (!openShulkerBox(targetContainer)) return result;
@@ -351,9 +364,13 @@ public class SlotOperations {
     }
 
     public static Map<String, Integer> takeItems(Map<String, Integer> itemAmounts, String sourceContainer, boolean front) {
+        DEBUG.Shulker("Material to take: " + itemAmounts + " from " + sourceContainer);
         Map<String, Integer> result = itemAmounts;
         List<Integer> sourceIndexes = null;
         List<Integer> targetIndexes = null;
+
+        if(isEmptyMap(itemAmounts)) return result;
+
 
         if (SlotOperations.containsIgnoreCase(sourceContainer, "Shulker")) {
             if (!openShulkerBox(sourceContainer)) return result;
@@ -365,7 +382,7 @@ public class SlotOperations {
         } else if (SlotOperations.containsIgnoreCase(sourceContainer, "pv")) {
             if (!openPV1("")) return result;
             sourceIndexes = (front ? Indexes.PV.PV : Indexes.PV.PV_REVERSE);
-            targetIndexes = Indexes.PV.MAIN_INVENTORY;
+            targetIndexes = Indexes.PV.TOTAL_INVENTORY;
             result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
             InventorySaver.PV(sourceContainer).update("Take Item");
             closeScreen();
@@ -381,25 +398,105 @@ public class SlotOperations {
 
     public static boolean isEmptyMap(Map<String, Integer> mp) {
         for (Map.Entry<String, Integer> entry : mp.entrySet())
-            if (entry.getValue() != 0) return false;
+            if (entry.getValue() > 0) return false;
         return true;
     }
 
-    public static void forceTakeFromShulker(Map<String, Integer> itemAmounts, String shulkerName) {
+    public static int amountToCompleteInventory(String itemName, int amount){
+        return Math.max(0, amount - InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(itemName));
+    }
+
+    public static boolean forceCompleteItemsToInventory(Map<String, Integer> itemsAmount){
+        for(Map.Entry<String, Integer> entry : itemsAmount.entrySet())
+            if(!forceCompleteItemsToInventory(entry.getKey(), entry.getValue()))
+                return false;
+        return true;
+    }
+
+    public static boolean forceCompleteItemsToInventory(String itemName, int amount){
+        // This function will take items from  PV and shulkers and shukers in PV to complete the required amount into the inventory
+        // Starts with PV1 then shulkers then PV1 shulkers
+
+        if(amountToCompleteInventory(itemName, amount) > 0)
+            takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), MyPV.PV1, false);
+
+        String shulkerName = ShulkerBoxStorage.getBoxNameForItem(itemName);
+        while(InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0 && amountToCompleteInventory(itemName, amount) > 0) {
+            takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
+            if(InventorySaver.Shulker(shulkerName).getItemCountByName(itemName) <= 0)
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, false);
+        }
+
+
+        int numShulkers = InventorySaver.PV(MyPV.PV1).getItemCountByName(shulkerName);
+        while(numShulkers > 0 && amountToCompleteInventory(itemName, amount) > 0) {
+            takeItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+            takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
+            if(InventorySaver.Shulker(shulkerName).getItemCountByName(itemName) > 0)
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+            else
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, false);
+            numShulkers--;
+        }
+
+        return amountToCompleteInventory(itemName, amount) <= 0;
+    }
+
+    public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount){
+
         openPV1("");
         closeScreen();
 
-        Map<String, Integer> remainingItems = new HashMap<>(itemAmounts);
-
-        remainingItems = takeItems(remainingItems, shulkerName, false);
-
-        if (!isEmptyMap(remainingItems)) {
-            sendItems(Map.of(shulkerName, 1), "pv", false);
-            if (!isEmptyMap(takeItems(Map.of(shulkerName, 1), "pv", true))) return;
-            forceTakeFromShulker(remainingItems, shulkerName);
+        Map<String, Map<String, Integer>> shulkerItems = new HashMap<>();
+        for(Map.Entry<String, Integer> entry : itemsAmount.entrySet()) {
+            String itemName = entry.getKey();
+            String shulkerName = ShulkerBoxStorage.getBoxNameForItem(itemName);
+            shulkerItems.putIfAbsent(shulkerName, new HashMap<>());
+            int amountWeHave = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(itemName);
+            shulkerItems.get(shulkerName).put(itemName, Math.min(entry.getValue(), amountWeHave));
         }
-        return;
+
+        DEBUG.Shulker("Shulker Items: " + shulkerItems);
+
+        for(Map.Entry<String, Map<String, Integer>> entry : shulkerItems.entrySet()){
+            String shulkerName = entry.getKey();
+            int numOfShulkersInPv = InventorySaver.PV(MyPV.PV1).getItemCountByName(shulkerName);
+            DEBUG.Shulker("Shulker Name: " + shulkerName + ", Num of Shulkers in PV: " + numOfShulkersInPv);
+            Trade shulkerTrade = ShulkerBoxStorage.getTradeFoShulkerBox(shulkerName);
+            Map<String, Integer> items = entry.getValue();
+            if(isEmptyMap(items)) continue;
+
+            Map<String, Integer> remainingItems = new HashMap<>(items);
+
+            // Check if we have the shulker box in the inventory
+            boolean invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
+            while(invHaveShulker && !isEmptyMap(remainingItems)){
+                remainingItems = sendItems(remainingItems, shulkerName, false);
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+                invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
+            }
+
+            // Check if we have the shulker box in the PV
+            for(int i = 0; i < numOfShulkersInPv && !isEmptyMap(remainingItems); i++){
+                takeItems(Map.of(shulkerName, 1), MyPV.PV1, false);
+                remainingItems = sendItems(remainingItems, shulkerName, false);
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+            }
+
+            // Buy shulker and fill it
+            while(!isEmptyMap(remainingItems)){
+                forceCompleteItemsToInventory("Raw Gold", 3);
+                buyItem(shulkerTrade, 1);
+                Sleep(2000);
+                openInventory("");
+                closeScreen();
+                remainingItems = sendItems(remainingItems, shulkerName, false);
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+            }
+        }
+
     }
+
 
     public static boolean isShulkerFull(String shulkerName) {
         openShulkerBox(shulkerName);
