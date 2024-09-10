@@ -63,4 +63,8 @@ public class Trade {
                 resultAmount
         );
     }
+
+    public Trade clone() {
+        return new Trade(TradeIndex, firstItemName, firstItemAmount, secondItemName, secondItemAmount, resultName, resultAmount);
+    }
 }

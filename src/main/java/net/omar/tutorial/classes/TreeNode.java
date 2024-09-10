@@ -1,5 +1,6 @@
 package net.omar.tutorial.classes;
 
+import com.sun.source.tree.Tree;
 import net.omar.tutorial.indexes.Market;
 
 import java.util.ArrayList;
@@ -68,6 +69,25 @@ public class TreeNode {
         return reversedPath;
     }
 
+    public TreeNode clone() {
+        TreeNode clone = new TreeNode(this.name);
+        if(this.children != null) {
+            clone.children = new ArrayList<>();
+            for (TreeNode child : this.children) {
+                clone.addNode(child.clone());
+            }
+        }
+
+        if(this.trades != null) {
+            clone.trades = new ArrayList<>();
+            for (Trade trade : this.trades) {
+                clone.addTrade(trade.clone());
+            }
+        }
+        clone.parent = this.parent;
+        return clone;
+    }
+
     public static List<Trade> shortPathFromItemToItem(String item1, String item2) {
         //DEBUG.Shulker("shortPathFromItemToItem: " + item1 + " -> " + item2);
         if(item1.equals("Emerald") && item2.equals("Gold Block"))
@@ -103,5 +123,17 @@ public class TreeNode {
             return List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t, Market.emeraldToRawGold_t);
 
         return new ArrayList<>();
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append("\n");
+        for (TreeNode child : children) {
+            sb.append("  ").append(child.toString().replace("\n", "\n  "));
+        }
+        for (Trade trade : trades) {
+            sb.append("  ").append(trade.toString()).append("\n");
+        }
+        return sb.toString();
     }
 }
