@@ -33,7 +33,12 @@ public class ShulkerBoxStorage {
         itemToShulker.put("Helmet", "Gray Shulker Box");
         itemToShulker.put("Chestplate", "Gray Shulker Box");
         itemToShulker.put("Leggings", "Gray Shulker Box");
-        itemToShulker.put("Boots", "Gray Box");
+
+        itemToShulker.put("Cap", "Gray Shulker Box");
+        itemToShulker.put("Tunic", "Gray Shulker Box");
+        itemToShulker.put("Pants", "Gray Shulker Box");
+        itemToShulker.put("Boots", "Gray Shulker Box");
+
         itemToShulker.put("Elytra", "Gray Shulker Box");
 
 
@@ -53,19 +58,16 @@ public class ShulkerBoxStorage {
 
     // Function 2: Takes an item name and returns the Shulker Box
     public static String getBoxNameForItem(String itemName) {
-        for(String key : itemToShulker.keySet()) {
-            if(key.equalsIgnoreCase(itemName))
-                return itemToShulker.get(key);
-        }
-        return "Black Shulker Box";
-    }
 
-    public static String getTypeForShulkerBox(String shulkerBoxName) {
-        for (String key : itemToShulker.keySet()) {
-            if (itemToShulker.get(key).equalsIgnoreCase(shulkerBoxName))
-                return key;
+        for(String key : itemToShulker.keySet()) {
+            if(itemName.toLowerCase().contains(key.toLowerCase())){
+                DEBUG.Shulker("getBoxNameForItem: " + itemName + " -> " + itemToShulker.get(key));
+
+                return itemToShulker.get(key);
+            }
         }
-        return "No Item Found";
+        DEBUG.Shulker("getBoxNameForItem: " + itemName + " -> " + "Black Shulker Box");
+        return "Black Shulker Box";
     }
 
 
@@ -98,8 +100,8 @@ public class ShulkerBoxStorage {
                 int itemCount = slot.getStack().getCount();
                 String shulkerBox = ShulkerBoxStorage.getBoxNameForItem(itemName);
                 int tradeId = ShulkerBoxStorage.getTradeIdForShulkerBox(shulkerBox);
-                String shulkerType = ShulkerBoxStorage.getTypeForShulkerBox(shulkerBox);
-                DEBUG.Shulker("Slot " + i + ": " + itemName + " x" + itemCount + " -> " + shulkerBox + " (" + shulkerType + ") " + " -> " + tradeId);
+                String shulkerType = ShulkerBoxStorage.getBoxNameForItem(shulkerBox);
+                //DEBUG.Shulker("Slot " + i + ": " + itemName + " x" + itemCount + " -> " + shulkerBox + " (" + shulkerType + ") " + " -> " + tradeId);
             }
         }
 
