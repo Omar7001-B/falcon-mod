@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.village.TradeOffer;
+import net.omar.tutorial.Tutorial;
 import net.omar.tutorial.classes.DEBUG;
 import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.indexes.Indexes;
@@ -86,31 +87,6 @@ public class SlotOperations {
 
     }
 
-    public static void showAllTrades() {
-        List<TradeOffer> offers = ((MerchantScreen) MinecraftClient.getInstance().currentScreen).getScreenHandler().getRecipes();
-        for (int i = 0; i < offers.size(); i++) {
-            TradeOffer offer = offers.get(i);
-
-            // Get the first buy item details
-            int firstPriceCount = offer.getOriginalFirstBuyItem().getCount();
-            String firstPriceName = offer.getOriginalFirstBuyItem().getName().getString();
-
-            // Get the second buy item details (if present)
-            int secondPriceCount = offer.getSecondBuyItem().isEmpty() ? 0 : offer.getSecondBuyItem().getCount();
-            String secondPriceName = offer.getSecondBuyItem().isEmpty() ? "None" : offer.getSecondBuyItem().getName().getString();
-
-            // Get the sell (output) item details
-            int sellCount = offer.getSellItem().getCount();
-            String sellName = offer.getSellItem().getName().getString();
-
-            LOGGER.info("Trade " + (i + 1) + ":");
-            LOGGER.info("    First Item: " + firstPriceCount + " x " + firstPriceName);
-            LOGGER.info("    Second Item: " + (secondPriceCount > 0 ? secondPriceCount + " x " + secondPriceName : "None"));
-            LOGGER.info("    Result: " + sellCount + " x " + sellName);
-            LOGGER.info("------------------------------------");
-        }
-
-    }
 
     public static int getSlotIndexContainsName(String itemName) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -267,10 +243,7 @@ public class SlotOperations {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return amount;
 
-        Slot sourceSlot = slots.get(sourceIndex);
-        if (!sourceSlot.hasStack()) return amount;
-
-        int sourceAmount = sourceSlot.getStack().getCount();
+        int sourceAmount = getElementAmountByIndex(sourceIndex);
         String sourceName = getSlotNameByIndex(sourceIndex);
 
         SlotClicker.slotNormalClick(sourceIndex);
@@ -296,6 +269,7 @@ public class SlotOperations {
 
         return amount;
     }
+
 
     // another fucntion that  move complete certain item amount
     public static void moveCompleteItemAmount(int sourceIndex, List<Integer> targetIndexes, int amount) {
@@ -333,7 +307,7 @@ public class SlotOperations {
 
 
     public static Map<String, Integer> sendItems(Map<String, Integer> itemAmounts, String targetContainer, boolean front) {
-        DEBUG.Shulker("Material to send: " + itemAmounts + " to " + targetContainer);
+        //DEBUG.Shulker("Material to send: " + itemAmounts + " to " + targetContainer);
         Map<String, Integer> result = new LinkedHashMap<>(itemAmounts);
         List<Integer> sourceIndexes = null;
         List<Integer> targetIndexes = null;
@@ -364,7 +338,7 @@ public class SlotOperations {
     }
 
     public static Map<String, Integer> takeItems(Map<String, Integer> itemAmounts, String sourceContainer, boolean front) {
-        DEBUG.Shulker("Material to take: " + itemAmounts + " from " + sourceContainer);
+        //DEBUG.Shulker("Material to take: " + itemAmounts + " from " + sourceContainer);
         Map<String, Integer> result = itemAmounts;
         List<Integer> sourceIndexes = null;
         List<Integer> targetIndexes = null;
@@ -425,6 +399,8 @@ public class SlotOperations {
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
             if(InventorySaver.Shulker(shulkerName).getItemCountByName(itemName) <= 0)
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, false);
+            else
+                sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
         }
 
 
@@ -443,7 +419,6 @@ public class SlotOperations {
     }
 
     public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount){
-
         openPV1("");
         closeScreen();
 
@@ -456,12 +431,10 @@ public class SlotOperations {
             shulkerItems.get(shulkerName).put(itemName, Math.min(entry.getValue(), amountWeHave));
         }
 
-        DEBUG.Shulker("Shulker Items: " + shulkerItems);
 
         for(Map.Entry<String, Map<String, Integer>> entry : shulkerItems.entrySet()){
             String shulkerName = entry.getKey();
             int numOfShulkersInPv = InventorySaver.PV(MyPV.PV1).getItemCountByName(shulkerName);
-            DEBUG.Shulker("Shulker Name: " + shulkerName + ", Num of Shulkers in PV: " + numOfShulkersInPv);
             Trade shulkerTrade = ShulkerBoxStorage.getTradeFoShulkerBox(shulkerName);
             Map<String, Integer> items = entry.getValue();
             if(isEmptyMap(items)) continue;
