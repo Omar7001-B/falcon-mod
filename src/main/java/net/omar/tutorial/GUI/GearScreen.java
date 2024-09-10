@@ -8,7 +8,11 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.option.SimpleOption;
 import net.minecraft.text.Text;
+import net.omar.tutorial.classes.DEBUG;
+import net.omar.tutorial.classes.TreeNode;
+import net.omar.tutorial.indexes.Market;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -56,18 +60,27 @@ public class GearScreen extends Screen {
 
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Submit"), button -> {
             close();
-            int[] values = {this.ArmorSlider.getValue(), this.ElytraSlider.getValue(),
-                    this.SwordSlider.getValue(), this.AxeSlider.getValue(),
-                    this.PickAxeSlider.getValue()};
+
+            TreeNode elytraOnly_p2 = Market.elytra_P2.clone();
+            elytraOnly_p2.trades.remove(0);
+            elytraOnly_p2.trades.remove(0);
+
+            DEBUG.Shulker("Armor" + elytraOnly_p2);
+
+            int[] values = {this.ArmorSlider.getValue(), this.ElytraSlider.getValue(), this.SwordSlider.getValue(), this.PickAxeSlider.getValue(), this.AxeSlider.getValue()};
             String[] items = {"Armor", "Elytra", "Sword", "PickAxe", "Axe"};
+            List<TreeNode> nodes = List.of(Market.armors_P1, elytraOnly_p2, Market.swords_P1, Market.pickaxes_P1, Market.axes_P1);
 
             CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
                 for (int i = 0; i < values.length; i++) {
                     int value = values[i];
-                    System.out.println(items[i] + ": " + convertValueToDescription(items[i], value));
-                    System.out.println("Value: " + value);
+                    if(value == 0) {
+                        continue;
+                    } else
                     if (value <= 6) {
+                        getMaterialAndBuyItem(nodes.get(i), value);
                     } else {
+                        getMaterialAndBuyItem(nodes.get(i), 9999);
                     }
                 }
             });
