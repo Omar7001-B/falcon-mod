@@ -6,7 +6,7 @@ import java.util.Map;
 public class NameConverter {
 
     private static final Map<String, String> wordsMap = new HashMap<>();
-    private static final String[] NON_STACKABLE_KEYWORDS = {"cap", "tunic", "pants", "boots", "totem" ,"bow", "sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker", "elytra"};
+    private static final String[] NON_STACKABLE_KEYWORDS = {"potion", "cap", "tunic", "pants", "boots", "totem" ,"bow", "sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker", "elytra"};
 
     static {
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɢᴏʟᴅ", "Raw Gold");
@@ -14,12 +14,20 @@ public class NameConverter {
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ɢᴏʟᴅ ʙʟᴏᴄᴋ", "Gold Block");
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ɢᴏʟᴅ ɴᴜɢɢᴇᴛ", "Gold Nugget");
         // Add other mappings here...
+
+        wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɪʀᴏɴ", "Raw Iron");
+        wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ɪʀᴏɴ ɪɴɢᴏᴛ", "Iron Ingot");
+        wordsMap.put("arrow", "arrow");
+        wordsMap.put("cobweb", "cobweb");
+        wordsMap.put("potion", "potion");
+        wordsMap.put("totem", "totem");
+        wordsMap.put("apple", "apple");
     }
 
     public static String offerNamesToInventoryNames(String input) {
         //LOGGER.info("Converting: " + input);
         for (Map.Entry<String, String> entry : wordsMap.entrySet()) {
-            if(input.contains(entry.getKey())) {
+            if(input.toLowerCase().contains(entry.getKey()) || input.contains(entry.getKey())) {
                 //LOGGER.info("Converted: " + entry.getValue());
                 return entry.getValue();
             }
