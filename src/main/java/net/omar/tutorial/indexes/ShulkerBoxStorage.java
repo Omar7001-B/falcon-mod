@@ -43,11 +43,12 @@ public class ShulkerBoxStorage {
 
 
         // Add remaining items
-        itemToShulker.put("Cobweb", "Cyan Shulker Box");
-        itemToShulker.put("Potion", "Magenta Shulker Box");
-        itemToShulker.put("Golden Apple", "Lime Shulker Box");
-        itemToShulker.put("Totem", "Pink Shulker Box");
-        itemToShulker.put("Trash", "Black Shulker Box");
+        itemToShulker.put("cobweb", "White Shulker Box");
+        itemToShulker.put("potion", "Magenta Shulker Box");
+        itemToShulker.put("apple", "Lime Shulker Box");
+        itemToShulker.put("totem", "Pink Shulker Box");
+        itemToShulker.put("arrow", "Cyan Shulker Box");
+        itemToShulker.put("trash", "Black Shulker Box");
 
     }
 
