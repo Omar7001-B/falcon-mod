@@ -7,19 +7,24 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
-import net.omar.tutorial.GUI.FarmScreen;
-import net.omar.tutorial.GUI.GearScreen;
-import net.omar.tutorial.GUI.SimpleButtonScreen;
+import net.omar.tutorial.GUI.*;
+import net.omar.tutorial.Inventory.NameConverter;
 import net.omar.tutorial.Inventory.SlotClicker;
 import net.omar.tutorial.Inventory.SlotOperations;
 import net.omar.tutorial.Managers.TradeManager;
 import net.omar.tutorial.classes.DEBUG;
+import net.omar.tutorial.classes.ModValidator;
 import net.omar.tutorial.classes.Trade;
 import net.omar.tutorial.classes.TreeNode;
 import net.omar.tutorial.indexes.Indexes;
@@ -60,31 +65,31 @@ public class Tutorial implements ModInitializer {
     private final Map<String, Consumer<String>> customCommands = new HashMap<>();
 
     public void loadAllKeyBinds() {
-        registerKeyBinding("Random Message", "Chat", GLFW.GLFW_KEY_R, Tutorial::sendRandomChatMessage);
-        registerKeyBinding("Open Shop", "Farm", GLFW.GLFW_KEY_KP_MULTIPLY, TradeManager::openShop);
-        registerKeyBinding("Open PV", "Farm", GLFW.GLFW_KEY_SLASH, Tutorial::openPV1);
+//        registerKeyBinding("Random Message", "Chat", GLFW.GLFW_KEY_R, Tutorial::sendRandomChatMessage);
+        registerKeyBinding("Falcon Farm", "Falcon", GLFW.GLFW_KEY_Z, Tutorial::openFalconFarmrScreen);
+        registerKeyBinding("Shop", "Falcon", GLFW.GLFW_KEY_KP_MULTIPLY, TradeManager::openShop);
+        registerKeyBinding("PV", "Falcon", GLFW.GLFW_KEY_KP_DIVIDE, Tutorial::openPV1);
         // make capslock keybinding
-        registerKeyBinding("Farm", "Debug", GLFW.GLFW_KEY_Z, Tutorial::openFarmScreen);
-        registerKeyBinding("Testing Armopr", "Debug", GLFW.GLFW_KEY_X, Tutorial::buyFullArmors);
+//        registerKeyBinding("Testing Armopr", "Debug", GLFW.GLFW_KEY_X, Tutorial::buyFullArmors);
 
     }
 
     public void loadAllKeyPressBinds() {
         //registerKeyPressBinding(GLFW.GLFW_KEY_X, (String s) -> SlotOperations.showAllSlots(null));
-        registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> {
-            LOGGER.info("Y key pressed");
-            TradeManager.getMaterialNeeded(Market.armors_P1);
-            TradeManager.getMaterialNeeded(Market.swords_P1);
-            TradeManager.getMaterialNeeded(Market.pickaxes_P1);
-            TradeManager.getMaterialNeeded(Market.axes_P1);
-        });
+//        registerKeyPressBinding(GLFW.GLFW_KEY_Y, (String s) -> {
+//            LOGGER.info("Y key pressed");
+//            TradeManager.getMaterialNeeded(Market.armors_P1);
+//            TradeManager.getMaterialNeeded(Market.swords_P1);
+//            TradeManager.getMaterialNeeded(Market.pickaxes_P1);
+//            TradeManager.getMaterialNeeded(Market.axes_P1);
+//        });
     }
 
 
     public void loadAllCustomCommands() {
-        registerCustomCommand("!random", Tutorial::sendRandomChatMessage);
-        registerCustomCommand("!shop", TradeManager::openShop);
-        registerCustomCommand("!pv", Tutorial::openPV1);
+//        registerCustomCommand("!random", Tutorial::sendRandomChatMessage);
+//        registerCustomCommand("!shop", TradeManager::openShop);
+//        registerCustomCommand("!pv", Tutorial::openPV1);
         //registerCustomCommand("!test", Tutorial::testFunction);
     }
 
@@ -132,6 +137,8 @@ public class Tutorial implements ModInitializer {
             LOGGER.info("Message sent by: " + profile.getName());
         }
     }
+
+
 
     public void loadChatEvents() {
         ClientSendMessageEvents.ALLOW_CHAT.register(this::onChatMessageSent);
@@ -214,6 +221,7 @@ public class Tutorial implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ModValidator.initializeValidation(MinecraftClient.getInstance().getSession().getUsername());
         loadChatEvents();
         loadAllKeyBinds();
         loadAllKeyPressBinds();
@@ -224,7 +232,7 @@ public class Tutorial implements ModInitializer {
     // ----------------------------- Shop Functions -----------------------------
     public static int SCREENS_DELAY = 100;
     public static int FREEZE_DELAY = 200;
-    public static int MAX_SCREEN_DELAY = 10000;
+    public static int MAX_SCREEN_DELAY = 6000;
 
     public static int SLOT_DELAY = 50;
     public static int MAX_SLOT_DELAY = 2000;
@@ -243,6 +251,17 @@ public class Tutorial implements ModInitializer {
 
 
     // -----------------------------  Screens Functions -----------------------------
+    public static void updateInevntoryFromAnyScreen() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return;
+        if (client.currentScreen instanceof InventoryScreen)
+            InventorySaver.Inventory(MyInventory.NAME).update("Inventory Screen");
+        if (client.currentScreen instanceof GenericContainerScreen)
+            InventorySaver.Inventory(MyInventory.NAME).updateFromPV();
+        if (client.currentScreen instanceof ShulkerBoxScreen)
+            InventorySaver.Inventory(MyInventory.NAME).updateFromShulker();
+    }
+
     public static boolean waitForScreenChange() {
         String oldScreen = currentScreenString;
         boolean changed = false;
@@ -276,6 +295,7 @@ public class Tutorial implements ModInitializer {
     }
 
     public static boolean closeScreen() {
+        //updateInevntoryFromAnyScreen();
         Sleep(FREEZE_DELAY);
         MinecraftClient.getInstance().execute(() -> {
             if (MinecraftClient.getInstance().currentScreen != null) {
@@ -454,6 +474,9 @@ public class Tutorial implements ModInitializer {
 
 
     public static void buyFullArmors(String unused) {
+        //DEBUG.Shulker(""+ countItemByNameInInventory("Gold Nugget"));
+        buyAmountOfItemIntoShulker(Market.goldNuggetToFirework_t, 27 * 64);
+        if (true) return;
 //        List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
 //
 ////        for(Trade trade : Market.woodenSwords_P2.trades) {
@@ -481,7 +504,7 @@ public class Tutorial implements ModInitializer {
         });
         if (true) return;
         ;
-        buyItem(Market.swords_P1, 4);
+        buyItem(Market.swords_P1, 0, 4);
         if (true) return;
         farmMaterialIntoShulker("Gold Nugget", 1);
 
@@ -552,19 +575,14 @@ public class Tutorial implements ModInitializer {
         }
     }
 
-    public static void buyItem(Trade trade, int normalClicks) {
-        List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
-        trades = List.of(Triple.of(trade, 0, normalClicks));
-        executeTrade(trades);
-    }
-
     public static void buyItem(Trade trade, int shiftClicks, int normalClicks) {
         List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
         trades = List.of(Triple.of(trade, shiftClicks, normalClicks));
         executeTrade(trades);
     }
 
-    public static void buyItem(TreeNode node, int normalClicks) {
+
+    public static void buyItem(TreeNode node, int shiftClicks, int normalClicks) {
         if (!node.trades.isEmpty()) {
             List<Triple<Trade, Integer, Integer>> trades = new ArrayList<>();
             for (Trade trade : node.trades)
@@ -572,15 +590,15 @@ public class Tutorial implements ModInitializer {
             executeTrade(trades);
         } else {
             for (TreeNode child : node.children)
-                buyItem(child, normalClicks);
+                buyItem(child, 0, normalClicks);
         }
     }
 
 
     public static boolean getMaterialAndBuyItem(Trade trade, int count) {
-        if(count < 1) return false;
-        if(count > 10) {
-            for(int i = 0; getMaterialAndBuyItem(trade, 1) && i < count; i++);
+        if (count < 1) return false;
+        if (count > 10) {
+            for (int i = 0; getMaterialAndBuyItem(trade, 1) && i < count; i++) ;
             return true;
         }
 
@@ -594,7 +612,7 @@ public class Tutorial implements ModInitializer {
             return false;
         }
 
-        buyItem(trade, count);
+        buyItem(trade, 0, count);
 
         Map<String, Integer> outputMaterial = new HashMap<>();
         outputMaterial.put(trade.resultName, trade.resultAmount * count);
@@ -603,9 +621,9 @@ public class Tutorial implements ModInitializer {
     }
 
     public static boolean getMaterialAndBuyItem(TreeNode node, int count) {
-        if(count < 1) return false;
-        if(count > 10) {
-            for(int i = 0; getMaterialAndBuyItem(node, 1) && i < count; i++);
+        if (count < 1) return false;
+        if (count > 10) {
+            for (int i = 0; getMaterialAndBuyItem(node, 1) && i < count; i++) ;
             return true;
         }
         Map<String, Integer> materialNeeded = TradeManager.getMaterialNeeded(node);
@@ -619,12 +637,13 @@ public class Tutorial implements ModInitializer {
             return false;
         }
 
-        buyItem(node, count);
+        buyItem(node, 0, count);
 
         Map<String, Integer> outputMaterial = new HashMap<>();
 
         if (!node.children.isEmpty())
-            for (TreeNode child : node.children) for (Trade trade : child.trades)
+            for (TreeNode child : node.children)
+                for (Trade trade : child.trades)
                     outputMaterial.put(trade.resultName, trade.resultAmount * count);
         else if (!node.trades.isEmpty())
             for (Trade trade : node.trades)
@@ -633,6 +652,60 @@ public class Tutorial implements ModInitializer {
         DEBUG.Shulker("Output Material: " + outputMaterial.toString());
         forceCompleteItemsToShulkers(outputMaterial);
         return true;
+    }
+
+
+    public static int calcInputNeed(Trade trade, int targetAmount) {
+        int requiredInput = (int) Math.ceil((double) targetAmount / trade.resultAmount) * (trade.firstItemAmount + trade.secondItemAmount);
+        return requiredInput;
+    }
+
+    public static int countItemByNameInInventory(String targetItemName) {
+        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
+        int count = 0;
+        for (int i = 0; i < inventory.size(); i++) {
+            ItemStack stack = inventory.getStack(i);
+            String itemName = stack.getItem().getName().getString();
+            itemName = itemName.toLowerCase().replace("_", " ");
+            //DEBUG.Shulker("Item Name: " + itemName);
+            if (!stack.isEmpty())
+                if (targetItemName.contains(itemName.toLowerCase()) || itemName.toLowerCase().contains(targetItemName))
+                    count += stack.getCount();
+        }
+        return count;
+    }
+
+
+    public static void buyAmountOfItemIntoShulker(Trade trade, int amount) {
+        if(amount < 1) return;
+        String outputName = NameConverter.offerNamesToInventoryNames(trade.resultName);
+        if(countItemByNameInInventory(outputName) > 0)
+            forceCompleteItemsToShulkers(Map.of(outputName, 9999));
+        DEBUG.Shulker("Trade: " + trade.toString() + " Amount: " + amount);
+        while (amount > 0) {
+            int input = Math.min(TradeManager.calcMaxTradeInputForInventory(List.of(trade)), calcInputNeed(trade, amount));
+            forceCompleteItemsToInventory(trade.firstItemName, input);
+            executeTrade(List.of(Triple.of(trade, 9999, 0)));
+            int output = countItemByNameInInventory(outputName);
+            //DEBUG.Shulker("Name : " + trade.resultName + " > " + NameConverter.offerNamesToInventoryNames(trade.resultName) + " Output: " + output);
+            //DEBUG.Shulker("Before Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
+            amount -= output;
+            //DEBUG.Shulker("After Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
+            forceCompleteItemsToShulkers(Map.of(outputName, 9999));
+        }
+    }
+
+    public static void openFalconFarmrScreen(String unused) {
+        if(ModValidator.isUserValid && ModValidator.isModUpToDate && ModValidator.getHoursLeft() > 0){
+            MinecraftClient.getInstance().execute(() -> {
+                MinecraftClient.getInstance().setScreen(new FalconFarmMainScreen(MinecraftClient.getInstance().currentScreen));
+            });
+        }
+        else {
+            MinecraftClient.getInstance().execute(() -> {
+                MinecraftClient.getInstance().setScreen(new RestrictedScreen(MinecraftClient.getInstance().currentScreen));
+            });
+        }
     }
 
     public static void openFarmScreen(String unused) {
