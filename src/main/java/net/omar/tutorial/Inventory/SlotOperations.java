@@ -444,7 +444,7 @@ public class SlotOperations {
             // Check if we have the shulker box in the inventory
             boolean invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
             while(invHaveShulker && !isEmptyMap(remainingItems)){
-                remainingItems = sendItems(remainingItems, shulkerName, false);
+                remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
                 invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
             }
@@ -452,18 +452,18 @@ public class SlotOperations {
             // Check if we have the shulker box in the PV
             for(int i = 0; i < numOfShulkersInPv && !isEmptyMap(remainingItems); i++){
                 takeItems(Map.of(shulkerName, 1), MyPV.PV1, false);
-                remainingItems = sendItems(remainingItems, shulkerName, false);
+                remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             }
 
             // Buy shulker and fill it
             while(!isEmptyMap(remainingItems)){
                 forceCompleteItemsToInventory("Raw Gold", 3);
-                buyItem(shulkerTrade, 1);
+                buyItem(shulkerTrade, 0, 1);
                 Sleep(2000);
                 openInventory("");
                 closeScreen();
-                remainingItems = sendItems(remainingItems, shulkerName, false);
+                remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             }
         }
