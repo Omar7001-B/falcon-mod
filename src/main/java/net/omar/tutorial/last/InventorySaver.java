@@ -44,7 +44,7 @@ public class InventorySaver {
             }
         });
 
-        //DEBUG.Store("Operation: " + operation);
+        DEBUG.Store("Updating " + name + " Inventory: " + operation + " After Update:" + entry.itemCounts);
     }
 
     public static int calculateTotalSlots(Map<String, Integer> items){
@@ -76,7 +76,6 @@ abstract class InventoryEntry {
     public int emptySlots;
     public final Map<String, Integer> itemCounts = new HashMap<>();
     public final Map<Integer, ItemSlotInfo> slotData = new HashMap<>();
-    public boolean isUpdated = false;
 
     protected InventoryEntry(String name) {
         this.name = name;
