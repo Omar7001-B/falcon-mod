@@ -66,8 +66,8 @@ public class FarmScreen extends Screen {
             CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {  // I think same thing could be done with a Thread, and put the sleep in the thread
                 for (int i = 0; i < values.length; i++) {
                     int value = values[i];
-                    System.out.println(items[i] + ": " + convertValueToDescription(items[i], value));
-                    System.out.println("Value: " + value);
+                    //System.out.println(items[i] + ": " + convertValueToDescription(items[i], value));
+                    //System.out.println("Value: " + value);
                     if (value <= 6) {
                         farmMaterialIntoPV(items[i], value * 64);
                     } else if (value == 17) {
