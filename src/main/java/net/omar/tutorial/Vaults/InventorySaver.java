@@ -1,19 +1,15 @@
-package net.omar.tutorial.last;
+package net.omar.tutorial.Vaults;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
-import net.omar.tutorial.Inventory.NameConverter;
-import net.omar.tutorial.Inventory.SlotOperations;
-import net.omar.tutorial.classes.DEBUG;
+import net.omar.tutorial.Managers.Naming;
+import net.omar.tutorial.Managers.Debugging;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static net.omar.tutorial.Tutorial.closeScreen;
-import static net.omar.tutorial.Tutorial.openInventory;
 
 public class InventorySaver {
 
@@ -44,7 +40,7 @@ public class InventorySaver {
             }
         });
 
-        DEBUG.Store("Updating " + name + " Inventory: " + operation + " After Update:" + entry.itemCounts);
+        Debugging.Store("Updating " + name + " Inventory: " + operation + " After Update:" + entry.itemCounts);
     }
 
     public static int calculateTotalSlots(Map<String, Integer> items){
@@ -52,7 +48,7 @@ public class InventorySaver {
         for (Map.Entry<String, Integer> entry : items.entrySet()) {
             String itemName = entry.getKey();
             int count = entry.getValue();
-            totalSlots += NameConverter.isStackedItem(itemName) ? (int)Math.ceil(count / 64.0) : 1;
+            totalSlots += Naming.isStackedItem(itemName) ? (int)Math.ceil(count / 64.0) : 1;
         }
         return totalSlots;
     }
@@ -85,10 +81,11 @@ abstract class InventoryEntry {
     public abstract void update(String name);
 
     public int getItemCountByName(String searchStr) {
-        DEBUG.Shop("Searching for: " + searchStr);
+        Debugging.Shop("ItemCounts: " + itemCounts);
+        Debugging.Shop("Searching for: " + searchStr);
         for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
-            if (SlotOperations.containsIgnoreCase(entry.getKey(), searchStr)) {
-                DEBUG.Shop("Found: " + entry.getKey() + ", Count: " + entry.getValue());
+            if (Naming.containsIgnoreCase(entry.getKey(), searchStr)) {
+                Debugging.Shop("Found: " + entry.getKey() + ", Count: " + entry.getValue());
                 return entry.getValue();
             }
         }
@@ -96,12 +93,12 @@ abstract class InventoryEntry {
     }
 
     public void showData() {
-        DEBUG.Store("Data:");
-        DEBUG.Store("Filled Slots: " + filledSlots);
-        DEBUG.Store("Empty Slots: " + emptySlots);
-        itemCounts.forEach((item, count) -> DEBUG.Store("Item: " + item + ", Count: " + count));
-        slotData.forEach((index, info) -> DEBUG.Store("Slot: " + index + ", Item: " + info.itemName + ", Count: " + info.count));
-        DEBUG.Store(("-------------------"));
+        Debugging.Store("Data:");
+        Debugging.Store("Filled Slots: " + filledSlots);
+        Debugging.Store("Empty Slots: " + emptySlots);
+        itemCounts.forEach((item, count) -> Debugging.Store("Item: " + item + ", Count: " + count));
+        slotData.forEach((index, info) -> Debugging.Store("Slot: " + index + ", Item: " + info.itemName + ", Count: " + info.count));
+        Debugging.Store(("-------------------"));
     }
 
     public static class ItemSlotInfo {
@@ -112,6 +109,13 @@ abstract class InventoryEntry {
             this.itemName = itemName;
             this.count = count;
         }
+    }
+
+    public void reset() {
+        filledSlots = 0;
+        emptySlots = 0;
+        itemCounts.clear();
+        slotData.clear();
     }
 }
 
