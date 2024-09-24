@@ -1,10 +1,10 @@
-package net.omar.tutorial.Inventory;
+package net.omar.tutorial.Managers;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.SlotActionType;
 
-public class SlotClicker {
+public class Clicking {
 
     public static int SLOT_CLICK_DELAY = 50;
 
