@@ -1,4 +1,4 @@
-package net.omar.tutorial.classes;
+package net.omar.tutorial.Managers;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,8 +7,8 @@ import java.io.IOException;
 
 import static net.omar.tutorial.Tutorial.LOGGER;
 
-public class DEBUG {
-    private static final boolean DISALBE = true;
+public class Debugging {
+    private static final boolean DISALBE = false;
     private static String currentScreen;
     public static final long MAX_FILE_SIZE = 1024 * 1024; // 1 MB limit
 
@@ -41,7 +41,7 @@ public class DEBUG {
     public static void LogScreenChange(String newScreen) {
         if(DISALBE) return;
         if (!newScreen.equals(currentScreen)) {
-            DEBUG.Screens("Screen changed from [" + currentScreen + "] --> [" + newScreen + "]");
+            Debugging.Screens("Screen changed from [" + currentScreen + "] --> [" + newScreen + "]");
             currentScreen = newScreen;
         }
     }
@@ -70,7 +70,5 @@ public class DEBUG {
         writeToFile("Error.txt", message);
     }
 
-    public static void Shulker(String message) {
-        writeToFile("Shulker.txt", message);
-    }
+    public static void Shulker(String message) { writeToFile("Shulker.txt", message); }
 }
