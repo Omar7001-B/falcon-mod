@@ -10,21 +10,21 @@ import net.minecraft.text.Text;
 import net.minecraft.text.Style;
 import net.minecraft.util.Formatting;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.omar.tutorial.classes.ModValidator;
+import net.omar.tutorial.Managers.Validating;
 
 @Environment(EnvType.CLIENT)
-public class FalconFarmMainScreen extends Screen {
+public class MainScreen extends Screen {
     private static final int BUTTON_WIDTH = 200;
     private static final int BUTTON_HEIGHT = 20;
     private static final Text TITLE = Text.literal("Falcon Farm Main Menu");
 
     private static final Text JOIN_DISCORD_TEXT = Text.literal("Join Discord With Us!")
             .setStyle(Style.EMPTY.withColor(Formatting.BLACK));
-    private static final String DISCORD_LINK = ModValidator.discordLink;
+    private static final String DISCORD_LINK = Validating.discordLink;
 
     private final Screen parent;
 
-    public FalconFarmMainScreen(Screen parent) {
+    public MainScreen(Screen parent) {
         super(TITLE);
         this.parent = parent;
     }
@@ -67,9 +67,9 @@ public class FalconFarmMainScreen extends Screen {
         this.renderBackground(context);
 
         // Display username, mod update status, and time left at the top
-        String modStatus = ModValidator.isModUpToDate ? "Mod is up to date!" : "Mod is outdated. Please check Discord.";
-        long daysLeft = ModValidator.getDaysLeft();
-        long hoursLeft = ModValidator.getHoursLeft();
+        String modStatus = Validating.isModUpToDate ? "Mod is up to date!" : "Mod is outdated. Please check Discord.";
+        long daysLeft = Validating.getDaysLeft();
+        long hoursLeft = Validating.getHoursLeft();
 
         String timeLeft = getFormattedTimeLeft(daysLeft, hoursLeft);
 
@@ -77,7 +77,7 @@ public class FalconFarmMainScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 16777215);
 
         // Adjust Y position to avoid intersection with buttons
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(modStatus).setStyle(Style.EMPTY.withColor(ModValidator.isModUpToDate ? Formatting.GREEN : Formatting.RED)), this.width / 2, 50, 16777215);
+        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(modStatus).setStyle(Style.EMPTY.withColor(Validating.isModUpToDate ? Formatting.GREEN : Formatting.RED)), this.width / 2, 50, 16777215);
 
         // Render buttons and other screen elements
         super.render(context, mouseX, mouseY, delta);
