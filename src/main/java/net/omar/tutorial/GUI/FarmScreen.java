@@ -8,12 +8,13 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.option.SimpleOption;
 import net.minecraft.text.Text;
+import net.omar.tutorial.Managers.Debugging;
+import net.omar.tutorial.Managers.Farming;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
-import static net.omar.tutorial.Tutorial.*;
 
 @Environment(EnvType.CLIENT)
 public class FarmScreen extends Screen {
@@ -61,6 +62,7 @@ public class FarmScreen extends Screen {
 
             int[] values = {this.goldNuggetSlider.getValue(), this.rawGoldSlider.getValue(), this.goldIngotSlider.getValue(), this.goldBlockSlider.getValue()};
             String[] items = {"Gold Nugget", "Raw Gold", "Gold Ingot", "Gold Block"};
+            List<String> inf = new ArrayList<>();
 
             // Asynchronously delay for 1 second (1000 ms) using CompletableFuture
             CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {  // I think same thing could be done with a Thread, and put the sleep in the thread
@@ -69,14 +71,22 @@ public class FarmScreen extends Screen {
                     //System.out.println(items[i] + ": " + convertValueToDescription(items[i], value));
                     //System.out.println("Value: " + value);
                     if (value <= 6) {
-                        farmMaterialIntoPV(items[i], value * 64);
+                        Farming.farmMaterialIntoPV(items[i], value * 64);
                     } else if (value == 17) {
-                        farmMaterialIntoShulker(items[i], 9999999);
+                        //;farmMaterialIntoShulker(items[i], 9999999);
+                        inf.add(items[i]);
                     } else {
-                        farmMaterialIntoShulker(items[i], value - 6);
+                        Farming.farmMaterialIntoShulker(items[i], value - 6);
                     }
 
                     // Print for debugging
+                }
+
+                for(int i = 0; i < 500; i++) {  // Infinite loop
+                    Debugging.Shulker("Infinite Farming: " + inf);
+                    for (String item : inf) {
+                        Farming.farmMaterialIntoShulker(item, 1);  // Farm 1 shulker at a time for each item
+                    }
                 }
             });
 

@@ -1,6 +1,4 @@
-package net.omar.tutorial.indexes;
-
-import net.omar.tutorial.classes.Trade;
+package net.omar.tutorial.Data;
 
 import java.util.List;
 

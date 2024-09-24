@@ -1,7 +1,6 @@
-package net.omar.tutorial.last;
+package net.omar.tutorial.Vaults;
 
-import net.omar.tutorial.classes.DEBUG;
-import net.omar.tutorial.indexes.Indexes;
+import net.omar.tutorial.Data.Indexes;
 
 public class MyInventory extends InventoryEntry {
     public static final String NAME = "Inventory";

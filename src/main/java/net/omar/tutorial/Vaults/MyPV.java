@@ -1,6 +1,6 @@
-package net.omar.tutorial.last;
+package net.omar.tutorial.Vaults;
 
-import net.omar.tutorial.indexes.Indexes;
+import net.omar.tutorial.Data.Indexes;
 
 public class MyPV extends InventoryEntry {
     public static final String PV1 = "PV1";
