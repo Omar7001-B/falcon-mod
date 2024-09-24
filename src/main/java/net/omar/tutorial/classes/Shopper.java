@@ -1,36 +1,34 @@
 package net.omar.tutorial.classes;
 
-import com.sun.source.tree.Tree;
-import net.omar.tutorial.indexes.Market;
+import net.omar.tutorial.Data.Market;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
-public class TreeNode {
+public class Shopper {
     public String name;
-    public TreeNode parent;
-    public List<TreeNode> children = new ArrayList<>();
-    public List<Trade> trades = new ArrayList<>();
+    public Shopper parent;
+    public List<Shopper> children = new ArrayList<>();
+    public List<Trader> trades = new ArrayList<>();
 
-    public TreeNode(String name) {
+    public Shopper(String name) {
         this.name = name;
     }
 
     // Renamed addChild to addNode
-    public TreeNode addNode(TreeNode child) {
+    public Shopper addNode(Shopper child) {
         child.parent = this;
         children.add(child);
         return child;
     }
 
     // Renamed search to searchNode
-    public TreeNode searchNode(String name) {
+    public Shopper searchNode(String name) {
         if (this.name.equals(name)) {
             return this;
         }
-        for (TreeNode child : children) {
-            TreeNode result = child.searchNode(name);
+        for (Shopper child : children) {
+            Shopper result = child.searchNode(name);
             if (result != null) {
                 return result;
             }
@@ -39,16 +37,16 @@ public class TreeNode {
     }
 
     // New method to add a Trade and set its Parent to the current TreeNode
-    public Trade addTrade(Trade trade) {
+    public Trader addTrade(Trader trade) {
         trade.Parent = this;  // Set the parent of the trade to this TreeNode
         trades.add(trade);
         return trade;
     }
 
     // New method to search for a Trade by index, including in child nodes
-    public Trade searchTrade(int tradeIndex) {
+    public Trader searchTrade(int tradeIndex) {
         // Search in current node's trades
-        for (Trade trade : trades) {
+        for (Trader trade : trades) {
             if (trade.TradeIndex == tradeIndex) {
                 return trade;
             }
@@ -58,7 +56,7 @@ public class TreeNode {
 
     public List<String> getPathFromRoot() {
         List<String> path = new ArrayList<>();
-        for (TreeNode node = this; node != null; node = node.parent) {
+        for (Shopper node = this; node != null; node = node.parent) {
             path.add(node.name);
         }
 
@@ -69,18 +67,18 @@ public class TreeNode {
         return reversedPath;
     }
 
-    public TreeNode clone() {
-        TreeNode clone = new TreeNode(this.name);
+    public Shopper clone() {
+        Shopper clone = new Shopper(this.name);
         if(this.children != null) {
             clone.children = new ArrayList<>();
-            for (TreeNode child : this.children) {
+            for (Shopper child : this.children) {
                 clone.addNode(child.clone());
             }
         }
 
         if(this.trades != null) {
             clone.trades = new ArrayList<>();
-            for (Trade trade : this.trades) {
+            for (Trader trade : this.trades) {
                 clone.addTrade(trade.clone());
             }
         }
@@ -88,7 +86,7 @@ public class TreeNode {
         return clone;
     }
 
-    public static List<Trade> shortPathFromItemToItem(String item1, String item2) {
+    public static List<Trader> shortPathFromItemToItem(String item1, String item2) {
         //DEBUG.Shulker("shortPathFromItemToItem: " + item1 + " -> " + item2);
         if(item1.equals("Emerald") && item2.equals("Gold Block"))
             return List.of(Market.emeraldToGoldBlock_t);
@@ -118,7 +116,7 @@ public class TreeNode {
         return new ArrayList<>();
     }
 
-    public static List<Trade> farmPathFromItem(String Item1){
+    public static List<Trader> farmPathFromItem(String Item1){
         if(Item1.equals("Raw Gold"))
             return List.of(Market.rawGoldToDiamond_t, Market.diamondToGoldNugget_t, Market.goldNuggetToEmerald_t, Market.emeraldToRawGold_t);
 
@@ -128,10 +126,10 @@ public class TreeNode {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append("\n");
-        for (TreeNode child : children) {
+        for (Shopper child : children) {
             sb.append("  ").append(child.toString().replace("\n", "\n  "));
         }
-        for (Trade trade : trades) {
+        for (Trader trade : trades) {
             sb.append("  ").append(trade.toString()).append("\n");
         }
         return sb.toString();

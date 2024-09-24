@@ -1,17 +1,6 @@
-package net.omar.tutorial.classes;
+package net.omar.tutorial.Managers;
 
-import net.omar.tutorial.Managers.TradeManager;
-import net.omar.tutorial.indexes.Market;
-import net.omar.tutorial.last.InventorySaver;
-import org.apache.commons.lang3.tuple.Triple;
-
-import java.util.List;
-import java.util.Map;
-
-import static net.omar.tutorial.Inventory.SlotOperations.sendItems;
-import static net.omar.tutorial.Inventory.SlotOperations.takeItems;
-
-public class OLD {
+public class Olding {
 
     /*
 
@@ -156,3 +145,11 @@ public class OLD {
         }
     }
  */
+
+//    public static void dropItem(String itemName) {
+//        openInventory("");
+//        int slot = SlotOperations.getSlotIndexContainsName(itemName);
+//        if (slot == -1) return;
+//        SlotClicker.slotDropOne(slot);
+//        closeScreen();
+//    }

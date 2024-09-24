@@ -1,4 +1,4 @@
-package net.omar.tutorial.classes;
+package net.omar.tutorial.Managers;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -15,7 +15,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 
-public class ModValidator {
+public class Validating {
     private static final String API_URL = "https://api.jsonbin.io/v3/b/66e070dde41b4d34e42d206f"; // Replace with your actual jsonbin.io URL
     private static final String CURRENT_VERSION = "1.0.0";
 

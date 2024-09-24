@@ -13,7 +13,7 @@ import net.minecraft.client.gui.widget.ThreePartsLayoutWidget;
 import net.minecraft.text.Text;
 import net.minecraft.text.Style;
 import net.minecraft.util.Formatting;
-import net.omar.tutorial.classes.ModValidator;
+import net.omar.tutorial.Managers.Validating;
 
 @Environment(EnvType.CLIENT)
 public class RestrictedScreen extends Screen {
@@ -43,7 +43,7 @@ public class RestrictedScreen extends Screen {
 
         // Validation message
         String username = MinecraftClient.getInstance().getSession().getUsername();
-        if (ModValidator.isUserValid) {
+        if (Validating.isUserValid) {
             adder.add(new TextWidget(Text.literal("User validation: " + username + " is valid!").setStyle(Style.EMPTY.withColor(Formatting.GREEN)), this.textRenderer));
         } else {
             adder.add(new TextWidget(Text.literal("User validation: " + username + " is not valid!  Your access has expired.").setStyle(Style.EMPTY.withColor(Formatting.RED)), this.textRenderer));
@@ -51,7 +51,7 @@ public class RestrictedScreen extends Screen {
         }
 
         // Mod update status message
-        if (ModValidator.isModUpToDate) {
+        if (Validating.isModUpToDate) {
             adder.add(new TextWidget(Text.literal("Mod status: Up to date!").setStyle(Style.EMPTY.withColor(Formatting.GREEN)), this.textRenderer));
         } else {
             adder.add(new TextWidget(Text.literal("Mod status: Outdated.").setStyle(Style.EMPTY.withColor(Formatting.RED)), this.textRenderer));
@@ -60,7 +60,7 @@ public class RestrictedScreen extends Screen {
 
         // Join Discord button
         adder.add(ButtonWidget.builder(Text.literal("Join Discord With Us!"), button ->
-                ConfirmLinkScreen.open(ModValidator.discordLink, this, true)
+                ConfirmLinkScreen.open(Validating.discordLink, this, true)
         ).width(BUTTON_WIDTH).build());
 
         // Back button

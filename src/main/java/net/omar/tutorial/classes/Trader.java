@@ -1,9 +1,8 @@
 package net.omar.tutorial.classes;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class Trade {
+public class Trader {
     public int TradeIndex;
 
     public String firstItemName;
@@ -15,13 +14,13 @@ public class Trade {
     public String resultName;
     public int resultAmount;
 
-    public TreeNode Parent;
+    public Shopper Parent;
 
 
     // Constructor with all item parameters
-    public Trade(int TradeIndex, String firstItemName, int firstItemAmount,
-                 String secondItemName, int secondItemAmount,
-                 String resultName, int resultAmount) {
+    public Trader(int TradeIndex, String firstItemName, int firstItemAmount,
+                  String secondItemName, int secondItemAmount,
+                  String resultName, int resultAmount) {
         this.TradeIndex = TradeIndex;
         this.firstItemName = firstItemName;
         this.firstItemAmount = firstItemAmount;
@@ -33,8 +32,8 @@ public class Trade {
     }
 
     // Overloaded constructor with optional second item parameters
-    public Trade(int TradeIndex, String firstItemName, int firstItemAmount,
-                 String resultName, int resultAmount) {
+    public Trader(int TradeIndex, String firstItemName, int firstItemAmount,
+                  String resultName, int resultAmount) {
         this.TradeIndex = TradeIndex;
         this.firstItemName = firstItemName;
         this.firstItemAmount = firstItemAmount;
@@ -64,7 +63,7 @@ public class Trade {
         );
     }
 
-    public Trade clone() {
-        return new Trade(TradeIndex, firstItemName, firstItemAmount, secondItemName, secondItemAmount, resultName, resultAmount);
+    public Trader clone() {
+        return new Trader(TradeIndex, firstItemName, firstItemAmount, secondItemName, secondItemAmount, resultName, resultAmount);
     }
 }
