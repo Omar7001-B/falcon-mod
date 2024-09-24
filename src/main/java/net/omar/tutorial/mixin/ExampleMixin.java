@@ -7,11 +7,11 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.*;
-import net.omar.tutorial.Inventory.SlotClicker;
-import net.omar.tutorial.Inventory.SlotOperations;
-import net.omar.tutorial.Managers.TradeManager;
-import net.omar.tutorial.classes.DEBUG;
-import net.omar.tutorial.indexes.Indexes;
+import net.omar.tutorial.Managers.Inventorying;
+import net.omar.tutorial.Managers.Clicking;
+import net.omar.tutorial.Managers.Trading;
+import net.omar.tutorial.Managers.Debugging;
+import net.omar.tutorial.Data.Indexes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -30,34 +30,34 @@ public class ExampleMixin {
 		if (packet instanceof ClickSlotC2SPacket) {
 			ClickSlotC2SPacket clickPacket = (ClickSlotC2SPacket) packet;
 			Int2ObjectMap<ItemStack> x = clickPacket.getModifiedStacks();
-			DEBUG.Mixin("ClickSlotC2SPacket - Sync ID: " + clickPacket.getSyncId() + ", Slot: " + clickPacket.getSlot() + ", Button: " + clickPacket.getButton() + ", SlotActionType: " + clickPacket.getActionType() + ", getStack: " + clickPacket.getStack());
+			Debugging.Mixin("ClickSlotC2SPacket - Sync ID: " + clickPacket.getSyncId() + ", Slot: " + clickPacket.getSlot() + ", Button: " + clickPacket.getButton() + ", SlotActionType: " + clickPacket.getActionType() + ", getStack: " + clickPacket.getStack());
 		}
 
 		if (packet instanceof ButtonClickC2SPacket) {
 			ButtonClickC2SPacket buttonPacket = (ButtonClickC2SPacket) packet;
-			DEBUG.Mixin("ButtonClickC2SPacket - Sync ID: " + buttonPacket.getSyncId() + ", Button ID: " + buttonPacket.getButtonId());
+			Debugging.Mixin("ButtonClickC2SPacket - Sync ID: " + buttonPacket.getSyncId() + ", Button ID: " + buttonPacket.getButtonId());
 		}
 
 		if (packet instanceof SelectMerchantTradeC2SPacket) {
 			SelectMerchantTradeC2SPacket tradePack = (SelectMerchantTradeC2SPacket) packet;
-			DEBUG.Mixin("Trade id is: " + tradePack.getTradeId());
+			Debugging.Mixin("Trade id is: " + tradePack.getTradeId());
 
-			if(!TradeManager.isAutomatedTrade){
+			if(!Trading.isAutomatedTrade){
 				int shiftKeyCode = GLFW.GLFW_KEY_LEFT_SHIFT;
 				if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), shiftKeyCode)) {
-					DEBUG.Mixin("Shift click on trade ID: " + tradePack.getTradeId());
-					SlotClicker.slotShiftLeftClick(Indexes.Trade.RESULT_SLOT);
+					Debugging.Mixin("Shift click on trade ID: " + tradePack.getTradeId());
+					Clicking.slotShiftLeftClick(Indexes.Trade.RESULT_SLOT);
 				} else {
 					// Normal click on trade ID
-					DEBUG.Mixin("Normal click on trade ID: " + tradePack.getTradeId());
-					SlotOperations.moveCompleteItem(Indexes.Trade.RESULT_SLOT, Indexes.Trade.TOTAL_INVENTORY);
+					Debugging.Mixin("Normal click on trade ID: " + tradePack.getTradeId());
+					Inventorying.moveCompleteItem(Indexes.Trade.RESULT_SLOT, Indexes.Trade.TOTAL_INVENTORY);
 				}
 
 			}
 		}
 
 		if (packet instanceof CloseHandledScreenC2SPacket) {
-			DEBUG.Mixin("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
+			Debugging.Mixin("Close screen id is: " + ((CloseHandledScreenC2SPacket) packet).getSyncId());
 		}
 	}
 }
