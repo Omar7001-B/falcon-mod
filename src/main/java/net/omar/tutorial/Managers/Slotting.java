@@ -4,12 +4,19 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
+import net.omar.tutorial.Tutorial;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Slotting {
+    public static final Map<Integer, String> slotStates = new HashMap<>();
+    public static int SLOT_DELAY = 50;
+    public static int MAX_SLOT_DELAY = 2000;
+
     public static DefaultedList<Slot> getSlots() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) {
@@ -144,5 +151,20 @@ public class Slotting {
             if(!slots.get(i).hasStack()) return i;
 
         return -1;
+    }
+
+    public static void waitForSlotChange(int index) {
+        String oldState = slotStates.getOrDefault(index, "");
+        for (int i = 0; i < MAX_SLOT_DELAY; i += SLOT_DELAY) {
+            Tutorial.Sleep(SLOT_DELAY);
+            String currentState = isEmptySlot(index) ? "empty" : getElementAmountByIndex(index) + "x" + getSlotNameByIndex(index);
+            if (!currentState.equals(oldState)) {
+                Debugging.Shop("Old State: " + oldState + " Current State: " + currentState + " Changed  ✅" + " at index: " + index + " in " + i + "ms");
+                slotStates.put(index, currentState);
+                return;
+            }
+        }
+
+        Debugging.Shop("Old State: " + oldState + " Current State: " + slotStates.getOrDefault(index, "") + " Not Changed ❌" + " at index: " + index);
     }
 }
