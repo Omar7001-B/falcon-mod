@@ -1,7 +1,12 @@
 package net.omar.tutorial.Managers;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
+import net.omar.tutorial.GUI.MainScreen;
+import net.omar.tutorial.GUI.RestrictedScreen;
+import net.omar.tutorial.Handlers.ChatMessageHandler;
 import net.omar.tutorial.Tutorial;
 import net.omar.tutorial.Vaults.InventorySaver;
 import net.omar.tutorial.Vaults.MyInventory;
@@ -41,7 +46,7 @@ public class Screening {
     }
 
     public static boolean openPV1(String unused) {
-        Tutorial.sendCommand("pv 1");
+        ChatMessageHandler.sendCommand("pv 1");
         boolean changed = waitForScreenChange();
         InventorySaver.PV("PV 1").update("Open PV");
         Slotting.showAllSlots(List.of()); // Show all slots
@@ -77,5 +82,30 @@ public class Screening {
             }
         });
         return waitForScreenChange();
+    }
+
+    // -----------------------------  Screens Functions -----------------------------
+    public static void updateInevntoryFromAnyScreen() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return;
+        if (client.currentScreen instanceof InventoryScreen)
+            InventorySaver.Inventory(MyInventory.NAME).update("Inventory Screen");
+        if (client.currentScreen instanceof GenericContainerScreen)
+            InventorySaver.Inventory(MyInventory.NAME).updateFromPV();
+        if (client.currentScreen instanceof ShulkerBoxScreen)
+            InventorySaver.Inventory(MyInventory.NAME).updateFromShulker();
+    }
+
+    public static void openFalconFarmrScreen(String unused) {
+        if(Validating.isUserValid && Validating.isModUpToDate && Validating.getHoursLeft() > 0){
+            MinecraftClient.getInstance().execute(() -> {
+                MinecraftClient.getInstance().setScreen(new MainScreen(MinecraftClient.getInstance().currentScreen));
+            });
+        }
+        else {
+            MinecraftClient.getInstance().execute(() -> {
+                MinecraftClient.getInstance().setScreen(new RestrictedScreen(MinecraftClient.getInstance().currentScreen));
+            });
+        }
     }
 }
