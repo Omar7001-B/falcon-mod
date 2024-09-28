@@ -6,6 +6,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
 import net.minecraft.village.TradeOffer;
+import net.omar.tutorial.Handlers.ChatMessageHandler;
 import net.omar.tutorial.Tutorial;
 import net.omar.tutorial.classes.Shopper;
 import net.omar.tutorial.classes.Trader;
@@ -24,7 +25,7 @@ public class Trading {
     public static boolean isAutomatedTrade;
 
     public static boolean openShop(String unused) {
-        Tutorial.sendCommand("shop");
+        ChatMessageHandler.sendCommand("shop");
         return Screening.waitForScreenChange();
     }
 
