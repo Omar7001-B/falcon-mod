@@ -4,11 +4,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
+import net.omar.tutorial.Data.Indexes;
 import net.omar.tutorial.Tutorial;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,7 +54,7 @@ public class Slotting {
         DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
         if (slots == null) return -1;
         //DEBUG.Store("Item We Search: " + itemName);
-        for (int i = 0; i < slots.size(); i++){
+        for (int i = 0; i < slots.size(); i++) {
             //DEBUG.Store("Item In Slot: " + slots.get(i).getStack().getItem().getName().getString());
             if (slots.get(i).getStack().getItem().getName().getString().contains(itemName)) return i;
         }
@@ -79,6 +79,35 @@ public class Slotting {
         for (int i = 0; i < slots.size(); i++)
             if (Naming.containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) return i;
         return -1;
+    }
+
+    public static int getSlotIndexByItemNameIgnoreCase(List<Integer>indexes, String itemName) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen == null) return -1;
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if (slots == null) return -1;
+        for (int i: indexes)
+            if (Naming.containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) return i;
+        return -1;
+    }
+
+    public static List<Integer> getSlotIndexesListByItemNameIgnoreCase(String itemName) {
+        List<Integer> indexes = new ArrayList<>();
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        if (client.currentScreen == null) return indexes; // Return empty list if no screen is open
+
+        DefaultedList<Slot> slots = ((HandledScreen<?>) client.currentScreen).getScreenHandler().slots;
+        if (slots == null) return indexes; // Return empty list if slots are null
+
+        // Iterate through all the slots and check for matching item names
+        for (int i = 0; i < slots.size(); i++) {
+            if (Naming.containsIgnoreCase(slots.get(i).getStack().getItem().getName().getString(), itemName)) {
+                indexes.add(i); // Add the matching index to the list
+            }
+        }
+
+        return indexes; // Return the list of matching indexes
     }
 
     public static String getSlotNameByIndex(int index) {
@@ -117,6 +146,26 @@ public class Slotting {
                 .orElse(-1);
     }
 
+    public static int getIndexFirstFilledSlot(List<Integer> indexes) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return -1;
+
+        return indexes.stream()
+                .filter(index -> slots.get(index).hasStack())
+                .findFirst()
+                .orElse(-1);
+    }
+
+    public static int getIndexFirstFilledSlotNot(List<Integer> indexes, String notItemName) {
+        DefaultedList<Slot> slots = getSlots();
+        if (slots == null) return -1;
+
+        return indexes.stream()
+                .filter(index -> slots.get(index).hasStack() && !Naming.containsIgnoreCase(slots.get(index).getStack().getItem().getName().getString(), notItemName))
+                .findFirst()
+                .orElse(-1);
+    }
+
     public static int countEmptySlots(List<Integer> indexes) {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return 0;
@@ -139,16 +188,16 @@ public class Slotting {
         DefaultedList<Slot> slots = getSlots();
         if (slots == null) return -1;
 
-        if(Naming.isStackedItem(itemName)) {
-            for(int i: targetIndexes) {
+        if (Naming.isStackedItem(itemName)) {
+            for (int i : targetIndexes) {
                 String name = slots.get(i).getStack().getItem().getName().getString();
                 int amount = slots.get(i).getStack().getCount();
-                if(Naming.containsIgnoreCase(name, itemName) && amount < 64) return i;
+                if (Naming.containsIgnoreCase(name, itemName) && amount < 64) return i;
             }
         }
 
-        for(int i: targetIndexes)
-            if(!slots.get(i).hasStack()) return i;
+        for (int i : targetIndexes)
+            if (!slots.get(i).hasStack()) return i;
 
         return -1;
     }
