@@ -2,16 +2,14 @@ package net.omar.tutorial.Managers;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
 import net.minecraft.village.TradeOffer;
 import net.omar.tutorial.Handlers.ChatMessageHandler;
 import net.omar.tutorial.Tutorial;
+import net.omar.tutorial.Vaults.VaultsStateManager;
 import net.omar.tutorial.classes.Shopper;
 import net.omar.tutorial.classes.Trader;
 import net.omar.tutorial.Data.Indexes;
-import net.omar.tutorial.Vaults.InventorySaver;
 import net.omar.tutorial.Vaults.MyInventory;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -127,7 +125,7 @@ public class Trading {
     }
 
     public static int calcMaxTradeInputForInventory(List<Trader> tradePath) {
-        Map<String, Integer> inventory = InventorySaver.Inventory(MyInventory.NAME).itemCounts;
+        Map<String, Integer> inventory = VaultsStateManager.Inventory(MyInventory.NAME).itemCounts;
         int inventoryMaxSlots = 34;
         int input = tradePath.get(0).firstItemAmount;
         if (tradePath.get(0).secondItemAmount > 0 && tradePath.get(0).firstItemName.equals(tradePath.get(0).secondItemName))
@@ -142,8 +140,8 @@ public class Trading {
             trade.put(firstItem, input);
             inv.put(firstItem, inv.getOrDefault(firstItem, 0) + input);
 
-            int oldSlots = InventorySaver.calculateTotalSlots(inventory);
-            int newSlots = InventorySaver.calculateTotalSlots(inv);
+            int oldSlots = VaultsStateManager.calculateTotalSlots(inventory);
+            int newSlots = VaultsStateManager.calculateTotalSlots(inv);
 
             if (newSlots > inventoryMaxSlots) return maxInput;
 
@@ -160,7 +158,7 @@ public class Trading {
                 inv.put(t.firstItemName, inv.getOrDefault(t.firstItemName, 0) - availableInput + remainingInput);
                 inv.put(t.resultName, inv.getOrDefault(t.resultName, 0) + producedAmount);
 
-                if (InventorySaver.calculateTotalSlots(inv) > inventoryMaxSlots) return maxInput;
+                if (VaultsStateManager.calculateTotalSlots(inv) > inventoryMaxSlots) return maxInput;
             }
 
             maxInput = input;
@@ -275,7 +273,7 @@ public class Trading {
             if (trade == null) continue;
             makeTrade(trade.TradeIndex - 1, shiftClicks, normalClicks);
         }
-        InventorySaver.Inventory(MyInventory.NAME).updateFromTrade();
+        VaultsStateManager.Inventory(MyInventory.NAME).updateFromTrade();
         Screening.closeScreen();
     }
 
@@ -308,6 +306,7 @@ public class Trading {
     }
 
     public static void buyItem(Trader trade, int shiftClicks, int normalClicks) {
+        if(shiftClicks == 0 && normalClicks == 0) return;
         List<Triple<Trader, Integer, Integer>> trades = new ArrayList<>();
         trades = List.of(Triple.of(trade, shiftClicks, normalClicks));
         executeTrade(trades);
@@ -387,21 +386,6 @@ public class Trading {
     public static int calcInputNeed(Trader trade, int targetAmount) {
         int requiredInput = (int) Math.ceil((double) targetAmount / trade.resultAmount) * (trade.firstItemAmount + trade.secondItemAmount);
         return requiredInput;
-    }
-
-    public static int countItemByNameInInventory(String targetItemName) {
-        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
-        int count = 0;
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack stack = inventory.getStack(i);
-            String itemName = stack.getItem().getName().getString();
-            itemName = itemName.toLowerCase().replace("_", " ");
-            //DEBUG.Shulker("Item Name: " + itemName);
-            if (!stack.isEmpty())
-                if (targetItemName.contains(itemName.toLowerCase()) || itemName.toLowerCase().contains(targetItemName))
-                    count += stack.getCount();
-        }
-        return count;
     }
 
     public static void buyAmountOfItemIntoShulker(Trader trade, int amount) {
