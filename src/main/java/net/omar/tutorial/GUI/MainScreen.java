@@ -35,6 +35,7 @@ public class MainScreen extends Screen {
         int padding = 10;
         int buttonStartY = this.height / 4; // Starting Y position for buttons
         int buttonSpacing = 24; // Spacing between buttons
+        int additionalSpacing = 10; // Additional space before Discord and Back buttons
 
         // Add a button for "Farm Screen"
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Farm Material"), button -> {
@@ -51,15 +52,20 @@ public class MainScreen extends Screen {
             this.client.setScreen(new ItemsScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 2 * buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
-        // Add a "Back" button to return to the parent screen
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Back"), button -> {
-            this.client.setScreen(this.parent);
-        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 5 * buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        // Add a button for "Inventory Saver"
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Inventory"), button -> {
+            this.client.setScreen(new InventoryScreen(this));
+        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 3 * buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
-        // Add the "Join Discord With Us!" button
+        // Add the "Join Discord With Us!" button with additional space
         this.addDrawableChild(ButtonWidget.builder(JOIN_DISCORD_TEXT, button -> {
             ConfirmLinkScreen.open(DISCORD_LINK, this, true);
-        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 4 * buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 4 * buttonSpacing + additionalSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+
+        // Add a "Back" button to return to the parent screen with additional space
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Back"), button -> {
+            this.client.setScreen(this.parent);
+        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 5 * buttonSpacing + additionalSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
     }
 
     @Override
