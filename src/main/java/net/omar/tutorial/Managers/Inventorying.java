@@ -1,9 +1,12 @@
 package net.omar.tutorial.Managers;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.omar.tutorial.Data.Indexes;
-import net.omar.tutorial.Vaults.InventorySaver;
+import net.omar.tutorial.Vaults.VaultsStateManager;
 import net.omar.tutorial.Vaults.MyInventory;
 import net.omar.tutorial.Vaults.MyPV;
 import net.omar.tutorial.classes.Trader;
@@ -149,14 +152,14 @@ public class Inventorying {
             sourceIndexes = Indexes.Shulker.TOTAL_INVENTORY;
             targetIndexes = (front ? Indexes.Shulker.SHULKER_BOX : Indexes.Shulker.SHULKER_BOX_REVERSE);
             result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-            InventorySaver.Shulker(targetContainer).update("Send Item");
+            VaultsStateManager.Shulker(targetContainer).update("Send Item");
             Screening.closeScreen();
         } else if (Naming.containsIgnoreCase(targetContainer, "pv")) {
             if (!Screening.openPV1("")) return result;
             sourceIndexes = Indexes.PV.TOTAL_INVENTORY;
             targetIndexes = (front ? Indexes.PV.PV : Indexes.PV.PV_REVERSE);
             result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-            InventorySaver.PV(targetContainer).update("Send Item");
+            VaultsStateManager.PV(targetContainer).update("Send Item");
             Screening.closeScreen();
         } else if (Naming.containsIgnoreCase(targetContainer, "enderchest")) {
             LOGGER.error("EnderChest not implemented yet");
@@ -180,14 +183,14 @@ public class Inventorying {
             sourceIndexes = (front ? Indexes.Shulker.SHULKER_BOX : Indexes.Shulker.SHULKER_BOX_REVERSE);
             targetIndexes = Indexes.Shulker.TOTAL_INVENTORY;
             result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-            InventorySaver.Shulker(sourceContainer).update("Take Item");
+            VaultsStateManager.Shulker(sourceContainer).update("Take Item");
             Screening.closeScreen();
         } else if (Naming.containsIgnoreCase(sourceContainer, "pv")) {
             if (!Screening.openPV1("")) return result;
             sourceIndexes = (front ? Indexes.PV.PV : Indexes.PV.PV_REVERSE);
             targetIndexes = Indexes.PV.TOTAL_INVENTORY;
             result = transferItems(itemAmounts, sourceIndexes, targetIndexes);
-            InventorySaver.PV(sourceContainer).update("Take Item");
+            VaultsStateManager.PV(sourceContainer).update("Take Item");
             Screening.closeScreen();
         } else if (Naming.containsIgnoreCase(sourceContainer, "enderchest")) {
             LOGGER.error("EnderChest not implemented yet");
@@ -205,8 +208,14 @@ public class Inventorying {
         return true;
     }
 
+    public static boolean isAllShulkersItems(Map<String, Integer> itemsAmount){
+        for(Map.Entry<String, Integer> entry : itemsAmount.entrySet())
+            if(!Naming.containsIgnoreCase(entry.getKey(), "shulker")) return false;
+        return true;
+    }
+
     public static int amountToCompleteInventory(String itemName, int amount){
-        return Math.max(0, amount - InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(itemName));
+        return Math.max(0, amount - VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(itemName));
     }
 
     public static boolean forceCompleteItemsToInventory(Map<String, Integer> itemsAmount){
@@ -224,20 +233,20 @@ public class Inventorying {
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), MyPV.PV1, false);
 
         String shulkerName = Shulkering.getBoxNameForItem(itemName);
-        while(InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0 && amountToCompleteInventory(itemName, amount) > 0) {
+        while(VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0 && amountToCompleteInventory(itemName, amount) > 0) {
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
-            if(InventorySaver.Shulker(shulkerName).getItemCountByName(itemName) <= 0)
+            if(VaultsStateManager.Shulker(shulkerName).getItemCountByName(itemName) <= 0)
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, false);
             else
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
         }
 
 
-        int numShulkers = Math.min(1, InventorySaver.PV(MyPV.PV1).getItemCountByName(shulkerName));
+        int numShulkers = Math.min(1, VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName));
         while(numShulkers > 0 && amountToCompleteInventory(itemName, amount) > 0) {
             takeItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
-            if(InventorySaver.Shulker(shulkerName).getItemCountByName(itemName) > 0)
+            if(VaultsStateManager.Shulker(shulkerName).getItemCountByName(itemName) > 0)
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             else
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, false);
@@ -248,6 +257,8 @@ public class Inventorying {
     }
 
     public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount){
+        if(isEmptyMap(itemsAmount)) return;
+        if(isAllShulkersItems(itemsAmount)) return;
         Screening.openPV1("");
         Screening.closeScreen();
 
@@ -258,7 +269,7 @@ public class Inventorying {
             String shulkerName = Shulkering.getBoxNameForItem(itemName);
             Debugging.Shulker("Item Name: " + itemName + ", Shulker: " + shulkerName);
             shulkerItems.putIfAbsent(shulkerName, new HashMap<>());
-            int amountWeHave = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(itemName);
+            int amountWeHave = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(itemName);
             shulkerItems.get(shulkerName).put(itemName, Math.min(entry.getValue(), amountWeHave));
         }
 
@@ -267,7 +278,7 @@ public class Inventorying {
 
         for(Map.Entry<String, Map<String, Integer>> entry : shulkerItems.entrySet()){
             String shulkerName = entry.getKey();
-            int numOfShulkersInPv = InventorySaver.PV(MyPV.PV1).getItemCountByName(shulkerName);
+            int numOfShulkersInPv = Math.min(VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName), 1);
             Trader shulkerTrade = Shulkering.getTradeFoShulkerBox(shulkerName);
             Map<String, Integer> items = entry.getValue();
             if(isEmptyMap(items)) continue;
@@ -275,11 +286,11 @@ public class Inventorying {
             Map<String, Integer> remainingItems = new HashMap<>(items);
 
             // Check if we have the shulker box in the inventory
-            boolean invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
+            boolean invHaveShulker = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
             while(invHaveShulker && !isEmptyMap(remainingItems)){
                 remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
-                invHaveShulker = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
+                invHaveShulker = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
             }
 
             // Check if we have the shulker box in the PV
@@ -311,4 +322,18 @@ public class Inventorying {
         return emptySlots <= 1;
     }
 
+    public static int countItemByNameInInventory(String targetItemName) {
+        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
+        int count = 0;
+        for (int i = 0; i < inventory.size(); i++) {
+            ItemStack stack = inventory.getStack(i);
+            String itemName = stack.getItem().getName().getString();
+            itemName = itemName.toLowerCase().replace("_", " ");
+            //DEBUG.Shulker("Item Name: " + itemName);
+            if (!stack.isEmpty())
+                if (targetItemName.contains(itemName.toLowerCase()) || itemName.toLowerCase().contains(targetItemName))
+                    count += stack.getCount();
+        }
+        return count;
+    }
 }
