@@ -11,7 +11,7 @@ public class MyPV extends InventoryEntry {
 
     @Override
     public void update(String operation) {
-        InventorySaver.updateInventoryState(name, operation, Indexes.PV.PV, this);
-        InventorySaver.Inventory(MyInventory.NAME).updateFromPV();
+        VaultsStateManager.updateInventoryState(name, operation, Indexes.PV.PV, this);
+        VaultsStateManager.Inventory(MyInventory.NAME).updateFromPV();
     }
 }

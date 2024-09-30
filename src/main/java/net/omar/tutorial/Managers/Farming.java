@@ -1,8 +1,8 @@
 package net.omar.tutorial.Managers;
 
+import net.omar.tutorial.Vaults.VaultsStateManager;
 import net.omar.tutorial.classes.Shopper;
 import net.omar.tutorial.classes.Trader;
-import net.omar.tutorial.Vaults.InventorySaver;
 import net.omar.tutorial.Vaults.MyInventory;
 import net.omar.tutorial.Vaults.MyPV;
 import org.apache.commons.lang3.tuple.Triple;
@@ -42,23 +42,23 @@ public class Farming {
             int cycleInput = Trading.calcMaxTradeInputForInventory(cycleTrades);
             takeItems(Map.of(cycleItem, amountToCompleteInventory(cycleItem, cycleInput)), shulker, true);
 
-            boolean isShulkerFull = InventorySaver.Shulker(shulker).filledSlots > 25;
+            boolean isShulkerFull = VaultsStateManager.Shulker(shulker).filledSlots > 25;
             if (isShulkerFull) {
                 //DEBUG.Shulker("Shulker is full: " + shulker);
                 sendItems(Map.of(shulker, 1), MyPV.PV1, true);
                 shulkerFarmedCount++;
-                InventorySaver.Shulker(shulker).reset();
+                VaultsStateManager.Shulker(shulker).reset();
                 if (shulkerFarmedCount >= numberOfShulkers) return;
             }
 
-            boolean isShulkerExist = InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(shulker) > 0;
+            boolean isShulkerExist = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulker) > 0;
             if (!isShulkerExist) executeTrade(List.of(Triple.of(shulkerTrade, 0, 1)));
 
             // Execute trade for each item in cycleTrades
             for (Trader trade : cycleTrades)
                 executeTrade(List.of(Triple.of(trade, 99999, 0)));
 
-            int itemsInShulker = InventorySaver.Shulker(shulker).getItemCountByName(cycleItem);
+            int itemsInShulker = VaultsStateManager.Shulker(shulker).getItemCountByName(cycleItem);
             if (itemsInShulker > cycleInput) {
                 executeTrade(List.of(Triple.of(lastOutputTrade, 99999, 0)));
             } else {
@@ -90,7 +90,7 @@ public class Farming {
 
         forceCompleteItemsToInventory(cycleItem, amountToCompleteInventory(cycleItem, Trading.calcMaxTradeInputForInventory(cycleTrades)));
 
-        int originalPVCycleItems = InventorySaver.PV(MyPV.PV1).getItemCountByName(cycleItem);
+        int originalPVCycleItems = VaultsStateManager.PV(MyPV.PV1).getItemCountByName(cycleItem);
         sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), MyPV.PV1, true);
 
         while (amountNeeded > 0) {
@@ -100,7 +100,7 @@ public class Farming {
             for (Trader trade : cycleTrades)
                 executeTrade(List.of(Triple.of(trade, 99999, 0)));
 
-            int itemsInPV = InventorySaver.PV(MyPV.PV1).getItemCountByName(cycleItem);
+            int itemsInPV = VaultsStateManager.PV(MyPV.PV1).getItemCountByName(cycleItem);
             if (itemsInPV - originalPVCycleItems > cycleInput) {
                 executeTrade(List.of(Triple.of(lastOutputTrade, 99999, 0)));
             } else {
@@ -114,9 +114,9 @@ public class Farming {
             }
 
             if (cycleItem.equals(outputItem))
-                amountNeeded -= InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem) - cycleInput;
+                amountNeeded -= VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(outputItem) - cycleInput;
             else
-                amountNeeded -= InventorySaver.Inventory(MyInventory.NAME).getItemCountByName(outputItem);
+                amountNeeded -= VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(outputItem);
 
             sendItems(Map.of(cycleItem, 1000, (outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000), MyPV.PV1, true);
         }

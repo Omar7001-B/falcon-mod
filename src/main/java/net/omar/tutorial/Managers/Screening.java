@@ -8,7 +8,7 @@ import net.omar.tutorial.GUI.MainScreen;
 import net.omar.tutorial.GUI.RestrictedScreen;
 import net.omar.tutorial.Handlers.ChatMessageHandler;
 import net.omar.tutorial.Tutorial;
-import net.omar.tutorial.Vaults.InventorySaver;
+import net.omar.tutorial.Vaults.VaultsStateManager;
 import net.omar.tutorial.Vaults.MyInventory;
 
 import java.util.List;
@@ -41,14 +41,14 @@ public class Screening {
             MinecraftClient.getInstance().setScreen(new InventoryScreen(Tutorial.client.player));
         });
         boolean changed = waitForScreenChange();
-        InventorySaver.Inventory(MyInventory.NAME).update("Open Inventory");
+        VaultsStateManager.Inventory(MyInventory.NAME).update("Open Inventory");
         return changed;
     }
 
     public static boolean openPV1(String unused) {
         ChatMessageHandler.sendCommand("pv 1");
         boolean changed = waitForScreenChange();
-        InventorySaver.PV("PV 1").update("Open PV");
+        VaultsStateManager.PV("PV 1").update("Open PV");
         Slotting.showAllSlots(List.of()); // Show all slots
         return changed;
     }
@@ -67,7 +67,7 @@ public class Screening {
 
         Clicking.slotRightClick(slot);
         boolean changed = waitForScreenChange();
-        InventorySaver.Shulker(name).update("Open Shulker Box");
+        VaultsStateManager.Shulker(name).update("Open Shulker Box");
 
         Debugging.Slots("Shulker Box: " + name + " Changed: " + changed);
         return changed;
@@ -89,11 +89,11 @@ public class Screening {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen == null) return;
         if (client.currentScreen instanceof InventoryScreen)
-            InventorySaver.Inventory(MyInventory.NAME).update("Inventory Screen");
+            VaultsStateManager.Inventory(MyInventory.NAME).update("Inventory Screen");
         if (client.currentScreen instanceof GenericContainerScreen)
-            InventorySaver.Inventory(MyInventory.NAME).updateFromPV();
+            VaultsStateManager.Inventory(MyInventory.NAME).updateFromPV();
         if (client.currentScreen instanceof ShulkerBoxScreen)
-            InventorySaver.Inventory(MyInventory.NAME).updateFromShulker();
+            VaultsStateManager.Inventory(MyInventory.NAME).updateFromShulker();
     }
 
     public static void openFalconFarmrScreen(String unused) {

@@ -9,8 +9,8 @@ public class MyShulker extends InventoryEntry {
 
     @Override
     public void update(String operation) {
-        InventorySaver.updateInventoryState(name, operation, Indexes.Shulker.SHULKER_BOX, this);
-        InventorySaver.Inventory("Inventory").updateFromShulker();
+        VaultsStateManager.updateInventoryState(name, operation, Indexes.Shulker.SHULKER_BOX, this);
+        VaultsStateManager.Inventory("Inventory").updateFromShulker();
     }
 
 
