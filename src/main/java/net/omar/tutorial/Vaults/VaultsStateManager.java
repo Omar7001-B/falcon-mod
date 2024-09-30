@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InventorySaver {
+public class VaultsStateManager {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
     private static final Map<String, MyShulker> shulkerMap = new HashMap<>();
