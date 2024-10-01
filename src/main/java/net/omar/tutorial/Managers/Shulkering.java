@@ -20,6 +20,7 @@ public class Shulkering {
         itemToShulker.put("Raw Gold", "Orange Shulker Box");
         itemToShulker.put("Gold Ingot", "Brown Shulker Box");
         itemToShulker.put("Gold Block", "Red Shulker Box");
+        itemToShulker.put("Block of Gold", "Red Shulker Box");
 
         // Add individual tool types with corresponding box color
         itemToShulker.put("Sword", "Gray Shulker Box");
@@ -37,6 +38,7 @@ public class Shulkering {
         itemToShulker.put("Tunic", "Gray Shulker Box");
         itemToShulker.put("Pants", "Gray Shulker Box");
         itemToShulker.put("Boots", "Gray Shulker Box");
+
         itemToShulker.put("Elytra", "Gray Shulker Box");
 
 
