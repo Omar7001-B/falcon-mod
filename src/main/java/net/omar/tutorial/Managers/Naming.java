@@ -28,6 +28,70 @@ public class Naming {
         wordsMap.put("obsidian", "obsidian");
     }
 
+    public static String determineMaterialType(Map<String, Integer> materialMap) {
+        boolean hasElytra = false;
+        boolean hasBow = false;
+        boolean hasShears = false;
+        boolean hasFullArmorSet = false;
+        boolean hasSword = false;
+        boolean hasPickaxe = false;
+        boolean hasAxe = false;
+
+        // Check the contents of the map
+        for (String materialName : materialMap.keySet()) {
+            String lowerCaseMaterial = materialName.toLowerCase();
+
+            // Check for specific items
+            if (lowerCaseMaterial.contains("elytra")) {
+                hasElytra = true;
+            } else if (lowerCaseMaterial.contains("bow")) {
+                hasBow = true;
+            } else if (lowerCaseMaterial.contains("shears")) {
+                hasShears = true;
+            } else if (lowerCaseMaterial.contains("helmet") ||
+                    lowerCaseMaterial.contains("chestplate") ||
+                    lowerCaseMaterial.contains("leggings") ||
+                    lowerCaseMaterial.contains("boots") ||
+                    lowerCaseMaterial.contains("tunic") ||
+                    lowerCaseMaterial.contains("cap") ||
+                    lowerCaseMaterial.contains("hood") ||
+                    lowerCaseMaterial.contains("robe")) {
+                hasFullArmorSet = true;
+            } else if (lowerCaseMaterial.contains("sword")) {
+                hasSword = true;
+            } else if (lowerCaseMaterial.contains("pickaxe")) {
+                hasPickaxe = true;
+            } else if (lowerCaseMaterial.contains("axe")) {
+                hasAxe = true;
+            }
+        }
+
+        // Determine the return value based on what was found
+        if (hasElytra) {
+            return "Elytra";
+        } else if (hasBow) {
+            return "Bow";
+        } else if (hasShears) {
+            return "Shears";
+        } else if (hasFullArmorSet) {
+            return "Full Armor Set";
+        } else if (hasSword) {
+            return "Sword";
+        } else if (hasPickaxe) {
+            return "Pickaxe";
+        } else if (hasAxe) {
+            return "Axe";
+        }
+
+        // Default return value if none of the conditions are met
+        return "No specific item found";
+    }
+
+    public static Map<String,Integer> fixMapMaterial(Map<String,Integer> materialMap){
+        Map<String,Integer> fixedMap = new HashMap<>();
+        return fixedMap;
+    }
+
     public static String offerNamesToInventoryNames(String input) {
         //LOGGER.info("Converting: " + input);
         for (Map.Entry<String, String> entry : wordsMap.entrySet()) {
