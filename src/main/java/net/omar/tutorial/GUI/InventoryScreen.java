@@ -30,13 +30,21 @@ public class InventoryScreen extends Screen {
         int additionalSpacing = 10; // Additional space between button groups
         int backButtonSpacing = 10; // Additional space before the "Back" button
 
+        // Add "Statistics" button
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Falcon Statistics"), button -> {
+            this.client.setScreen(new FalconStatsScreen(this)); // Change to your actual FalconStatsScreen class
+        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+
+        // Additional space after "Statistics" button
+        int statisticsButtonY = buttonStartY + BUTTON_HEIGHT + additionalSpacing;
+
         // Add "Save Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Save Inventory"), button -> {
             this.close();
             CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
                 Saving.saveInventoryItemsIntoShulker();
             });
-        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        }).dimensions(centerX - BUTTON_WIDTH / 2, statisticsButtonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add "Recover Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Recover Inventory"), button -> {
@@ -44,10 +52,10 @@ public class InventoryScreen extends Screen {
             CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
                 Saving.recoverInventoryItemsFromShulker();
             });
-        }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        }).dimensions(centerX - BUTTON_WIDTH / 2, statisticsButtonY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add additional space before "Send Inventory" button
-        int secondGroupStartY = buttonStartY + 2 * buttonSpacing + additionalSpacing;
+        int secondGroupStartY = statisticsButtonY + 2 * buttonSpacing + additionalSpacing;
 
         // Add "Send Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Send Inventory"), button -> {
@@ -59,8 +67,8 @@ public class InventoryScreen extends Screen {
             });
         }).dimensions(centerX - BUTTON_WIDTH / 2, secondGroupStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
-        // Add "Take Inventory" button
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Take Inventory"), button -> {
+        // Add "Complete Inventory" button
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Complete Inventory"), button -> {
             this.client.setScreen(new TakeItemsScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, secondGroupStartY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
