@@ -346,6 +346,8 @@ public class Trading {
         Map<String, Integer> outputMaterial = new HashMap<>();
         outputMaterial.put(trade.resultName, trade.resultAmount * count);
         forceCompleteItemsToShulkers(outputMaterial);
+        String type = Naming.determineMaterialType(outputMaterial);
+        Statting.addGearStat(type, count);
         return true;
     }
 
@@ -380,6 +382,8 @@ public class Trading {
 
         Debugging.Shulker("Output Material: " + outputMaterial.toString());
         forceCompleteItemsToShulkers(outputMaterial);
+        String type = Naming.determineMaterialType(outputMaterial);
+        Statting.addGearStat(type, count);
         return true;
     }
 
@@ -395,14 +399,16 @@ public class Trading {
         if(countItemByNameInInventory(outputName) > 0)
             forceCompleteItemsToShulkers(Map.of(outputName, 9999));
         Debugging.Shulker("Trade: " + trade.toString() + " Amount: " + amount);
-        while (amount > 0) {
+        int notHaveMaterial = 0;
+        while (amount > 0 && notHaveMaterial < 2)  {
             int input = Math.min(calcMaxTradeInputForInventory(List.of(trade)), calcInputNeed(trade, amount));
-            forceCompleteItemsToInventory(trade.firstItemName, input);
+            notHaveMaterial += forceCompleteItemsToInventory(trade.firstItemName, input) ? 0 : 1;
             executeTrade(List.of(Triple.of(trade, 9999, 0)));
             int output = countItemByNameInInventory(outputName);
             //DEBUG.Shulker("Name : " + trade.resultName + " > " + NameConverter.offerNamesToInventoryNames(trade.resultName) + " Output: " + output);
             //DEBUG.Shulker("Before Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
             amount -= output;
+            Statting.addItemStat(trade.resultName, output);
             //DEBUG.Shulker("After Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
             forceCompleteItemsToShulkers(Map.of(outputName, 9999));
         }
