@@ -73,5 +73,6 @@ public class Debugging {
     public static void Shulker(String message) { writeToFile("Shulker.txt", message); }
 
     public static void Validation(String message) { writeToFile("Validation.txt", message); }
-    public  static void  Save(String message) { writeToFile("Save.txt", message); }
+    public static void  Save(String message) { writeToFile("Save.txt", message); }
+    public static void Force(String message) { writeToFile("Force.txt", message); }
 }
