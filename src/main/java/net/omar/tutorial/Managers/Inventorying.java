@@ -219,6 +219,7 @@ public class Inventorying {
     }
 
     public static boolean forceCompleteItemsToInventory(Map<String, Integer> itemsAmount){
+        Debugging.Save("Force Complete Items To Inventory: " + itemsAmount);
         for(Map.Entry<String, Integer> entry : itemsAmount.entrySet())
             if(!forceCompleteItemsToInventory(entry.getKey(), entry.getValue()))
                 return false;
@@ -228,7 +229,7 @@ public class Inventorying {
     public static boolean forceCompleteItemsToInventory(String itemName, int amount){
         // This function will take items from  PV and shulkers and shukers in PV to complete the required amount into the inventory
         // Starts with PV1 then shulkers then PV1 shulkers
-
+        Debugging.Force("Force Complete Items To Inventory: " + itemName + " -> " + amount);
         if(amountToCompleteInventory(itemName, amount) > 0)
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), MyPV.PV1, false);
 
@@ -242,7 +243,7 @@ public class Inventorying {
         }
 
 
-        int numShulkers = Math.min(1, VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName));
+        int numShulkers = Math.min(2, VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName));
         while(numShulkers > 0 && amountToCompleteInventory(itemName, amount) > 0) {
             takeItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
@@ -256,52 +257,90 @@ public class Inventorying {
         return amountToCompleteInventory(itemName, amount) <= 0;
     }
 
-    public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount){
-        if(isEmptyMap(itemsAmount)) return;
-        if(isAllShulkersItems(itemsAmount)) return;
-        Screening.openPV1("");
-        Screening.closeScreen();
-
-        Map<String, Map<String, Integer>> shulkerItems = new HashMap<>();
-        Debugging.Shulker("Items Amount: " + itemsAmount);
-        for(Map.Entry<String, Integer> entry : itemsAmount.entrySet()) {
+    public static Map<String,Integer> filterItemsForSending(Map<String, Integer>itemsAmount){
+        Map<String, Integer> result = new LinkedHashMap<>();
+        // loop on the itemsAmount
+        for(Map.Entry<String, Integer> entry : itemsAmount.entrySet()){
             String itemName = entry.getKey();
-            String shulkerName = Shulkering.getBoxNameForItem(itemName);
-            Debugging.Shulker("Item Name: " + itemName + ", Shulker: " + shulkerName);
-            shulkerItems.putIfAbsent(shulkerName, new HashMap<>());
-            int amountWeHave = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(itemName);
-            shulkerItems.get(shulkerName).put(itemName, Math.min(entry.getValue(), amountWeHave));
+            int amount = entry.getValue();
+            int invAmount = Math.max(countItemByNameInInventory(itemName),  VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(itemName));
+
+            int actualAmount = Math.min(amount, invAmount);
+            if(actualAmount > 0)
+                result.put(itemName, actualAmount);
         }
 
-        Debugging.Shulker("Items Amount: " + itemsAmount);
-        Debugging.Shulker("Shulker Items: " + shulkerItems);
+        return result;
+    }
 
-        for(Map.Entry<String, Map<String, Integer>> entry : shulkerItems.entrySet()){
+    public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount) {
+        Debugging.Force("Force Complete Items To Shulkers: " + itemsAmount);
+        if (isEmptyMap(itemsAmount)) {
+            Debugging.Force("Items amount is empty. Exiting method.");
+            return;
+        }
+
+        if (isAllShulkersItems(itemsAmount)) {
+            Debugging.Force("All items are already in shulkers. Exiting method.");
+            return;
+        }
+
+        Screening.openPV1("");
+        Screening.closeScreen();
+        Debugging.Force("Opened and closed PV1.");
+
+        Map<String, Map<String, Integer>> shulkerItems = new HashMap<>();
+        Debugging.Force("Items Amount: " + itemsAmount);
+
+        for (Map.Entry<String, Integer> entry : itemsAmount.entrySet()) {
+            String itemName = entry.getKey();
+            String shulkerName = Shulkering.getBoxNameForItem(itemName);
+            Debugging.Force("Item Name: " + itemName + ", Shulker: " + shulkerName);
+
+            shulkerItems.putIfAbsent(shulkerName, new HashMap<>());
+            int amountWeHave = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(itemName);
+            int amountToSend = Math.min(entry.getValue(), amountWeHave);
+            shulkerItems.get(shulkerName).put(itemName, amountToSend);
+
+            Debugging.Force("Item: " + itemName + ", Amount to send: " + amountToSend + ", Available: " + amountWeHave);
+        }
+
+        Debugging.Force("Shulker Items: " + shulkerItems);
+
+        for (Map.Entry<String, Map<String, Integer>> entry : shulkerItems.entrySet()) {
             String shulkerName = entry.getKey();
-            int numOfShulkersInPv = Math.min(VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName), 1);
+            int numOfShulkersInPv = Math.min(VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName), 2);
             Trader shulkerTrade = Shulkering.getTradeFoShulkerBox(shulkerName);
             Map<String, Integer> items = entry.getValue();
-            if(isEmptyMap(items)) continue;
+
+            if (isEmptyMap(items)) {
+                Debugging.Force("No items for shulker: " + shulkerName + ". Skipping.");
+                continue;
+            }
 
             Map<String, Integer> remainingItems = new HashMap<>(items);
+            Debugging.Force("Remaining items for shulker " + shulkerName + ": " + remainingItems);
 
             // Check if we have the shulker box in the inventory
             boolean invHaveShulker = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
-            while(invHaveShulker && !isEmptyMap(remainingItems)){
+            while (invHaveShulker && !isEmptyMap(remainingItems)) {
                 remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+                Debugging.Force("Sent items to shulker " + shulkerName + ". Remaining items: " + remainingItems);
                 invHaveShulker = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(shulkerName) > 0;
             }
 
             // Check if we have the shulker box in the PV
-            for(int i = 0; i < numOfShulkersInPv && !isEmptyMap(remainingItems); i++){
+            for (int i = 0; i < numOfShulkersInPv && !isEmptyMap(remainingItems); i++) {
                 takeItems(Map.of(shulkerName, 1), MyPV.PV1, false);
+                Debugging.Shulker("Took 1 shulker " + shulkerName + " from PV. Remaining items: " + remainingItems);
                 remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+                Debugging.Force("Sent items to shulker " + shulkerName + ". Remaining items: " + remainingItems);
             }
 
             // Buy shulker and fill it
-            while(!isEmptyMap(remainingItems)){
+            while (!isEmptyMap(remainingItems)) {
                 forceCompleteItemsToInventory("Raw Gold", 3);
                 Trading.buyItem(shulkerTrade, 0, 1);
                 Sleep(2000);
@@ -309,9 +348,9 @@ public class Inventorying {
                 Screening.closeScreen();
                 remainingItems = sendItems(remainingItems, shulkerName, true);
                 sendItems(Map.of(shulkerName, 1), MyPV.PV1, true);
+                Debugging.Force("Bought 1 " + shulkerName + ". Remaining items: " + remainingItems);
             }
         }
-
     }
 
 
