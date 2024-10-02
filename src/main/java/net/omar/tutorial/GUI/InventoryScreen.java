@@ -4,8 +4,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.stat.Stat;
 import net.minecraft.text.Text;
 import net.omar.tutorial.Managers.Saving;
+import net.omar.tutorial.Managers.Statting;
+import net.omar.tutorial.Managers.Validating;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -41,17 +44,19 @@ public class InventoryScreen extends Screen {
         // Add "Save Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Save Inventory"), button -> {
             this.close();
-            CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
-                Saving.saveInventoryItemsIntoShulker();
-            });
+            if (Validating.enableSaveInventory)
+                CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
+                    Saving.saveInventoryItemsIntoShulker();
+                });
         }).dimensions(centerX - BUTTON_WIDTH / 2, statisticsButtonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add "Recover Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Recover Inventory"), button -> {
             this.close();
-            CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
-                Saving.recoverInventoryItemsFromShulker();
-            });
+            if (Validating.enableRecoverInventory)
+                CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
+                    Saving.recoverInventoryItemsFromShulker();
+                });
         }).dimensions(centerX - BUTTON_WIDTH / 2, statisticsButtonY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add additional space before "Send Inventory" button
@@ -62,14 +67,16 @@ public class InventoryScreen extends Screen {
             // Implement functionality for sending inventory here
             this.close();
             // Example functionality
-            CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
-                Saving.sendAllItemsToShulkers();
-            });
+            if (Validating.enableSendInventory)
+                CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS).execute(() -> {
+                    Saving.sendAllItemsToShulkers();
+                });
         }).dimensions(centerX - BUTTON_WIDTH / 2, secondGroupStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add "Complete Inventory" button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Complete Inventory"), button -> {
-            this.client.setScreen(new TakeItemsScreen(this));
+            if (Validating.enableCompleteInventory)
+                this.client.setScreen(new TakeItemsScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, secondGroupStartY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add additional space before "Back" button
