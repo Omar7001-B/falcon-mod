@@ -8,7 +8,7 @@ import java.io.IOException;
 import static net.omar.tutorial.Tutorial.LOGGER;
 
 public class Debugging {
-    private static final boolean DISALBE = false;
+    private static final boolean DISALBE = true;
     private static String currentScreen;
     public static final long MAX_FILE_SIZE = 1024 * 1024; // 1 MB limit
 
@@ -73,6 +73,7 @@ public class Debugging {
     public static void Shulker(String message) { writeToFile("Shulker.txt", message); }
 
     public static void Validation(String message) { writeToFile("Validation.txt", message); }
-    public static void  Save(String message) { writeToFile("Save.txt", message); }
+    public static void Statting(String message) { writeToFile("Statting.txt", message); }
+    public static void Save(String message) { writeToFile("Save.txt", message); }
     public static void Force(String message) { writeToFile("Force.txt", message); }
 }
