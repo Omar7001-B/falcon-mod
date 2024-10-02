@@ -3,23 +3,16 @@ package net.omar.tutorial;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.omar.tutorial.Handlers.ChatMessageHandler;
 import net.omar.tutorial.Handlers.KeyBindingHandler;
 import net.omar.tutorial.Handlers.KeyPressingHandler;
 import net.omar.tutorial.Managers.*;
-import org.apache.commons.logging.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import java.util.Map;
 
 
 public class Tutorial implements ModInitializer {
@@ -46,13 +39,22 @@ public class Tutorial implements ModInitializer {
 
     @Override
     public void onInitialize() {
-
+        Validating.updateValidatingData("force");
         ClientPlayConnectionEvents.INIT.register((ClientPlayNetworkHandler handler, MinecraftClient client) -> {
             Debugging.Validation("Client connected to server: " + handler.getConnection().getAddress());
-            showCurrentUser("Init Event");
+            Validating.updateValidatingData("gameStart");
+            Statting.saveStatsToServer("gameStart");
         });
 
-        Validating.initializeValidation(MinecraftClient.getInstance().getSession().getUsername()); // Initialize validation
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            Debugging.Validation("Client disconnected from server: " + handler.getConnection().getAddress());
+            Statting.saveStatsToServer("gameEnd");
+        });
+
+
+        //Validating.initializeValidation(MinecraftClient.getInstance().getSession().getUsername()); // Initialize validation
+
         ChatMessageHandler.loadChatEvents(); // Load chat events
         KeyBindingHandler.loadAllKeyBinds(); // Load key bindings
         KeyPressingHandler.loadAllKeyPressBinds(); // Load key press bindings
@@ -61,13 +63,23 @@ public class Tutorial implements ModInitializer {
     }
 
     public static void showCurrentUser(String s) {
+        //Trading.executeTrade(Market.rawgoldToPurpleBox_t);
+        //Trading.buyItem(Market.rawgoldToPurpleBox_t, 0, 1);
+
+        //Trading.getMaterialAndBuyItem(Market.rawgoldToPurpleBox_t, 1);
+        if(!s.equals("Init Event")){
+            Statting.addFarmingStat("Gold Nugget", 5);
+            Statting.addItemStat("Potion of Strength", 1);
+            Statting.addGearStat("Sword", 1);
+        }
+
         /*
-	private final String username;
-	private final String uuid;
-	private final String accessToken;
-	private final Optional<String> xuid;
-	private final Optional<String> clientId;
-	private final Session.AccountType accountType;
+        private final String username;
+        private final String uuid;
+        private final String accessToken;
+        private final Optional<String> xuid;
+        private final Optional<String> clientId;
+        private final Session.AccountType accountType;
          */
         Debugging.Validation("Username: " + MinecraftClient.getInstance().getSession().getUsername());
         Debugging.Validation("UUID: " + MinecraftClient.getInstance().getSession().getUuid());
