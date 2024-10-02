@@ -12,6 +12,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.omar.tutorial.Managers.Validating;
 
+import java.time.temporal.ChronoUnit;
+
 @Environment(EnvType.CLIENT)
 public class MainScreen extends Screen {
     private static final int BUTTON_WIDTH = 200;
@@ -39,17 +41,20 @@ public class MainScreen extends Screen {
 
         // Add a button for "Farm Screen"
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Farm Material"), button -> {
-            this.client.setScreen(new FarmScreen(this));
+            if (Validating.enableFarming)
+                this.client.setScreen(new FarmScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add a button for "Gear Screen"
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Buy Gear"), button -> {
-            this.client.setScreen(new GearScreen(this));
+            if (Validating.enableBuyGears)
+                this.client.setScreen(new GearScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add a button for "Items Screen"
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Buy Items"), button -> {
-            this.client.setScreen(new ItemsScreen(this));
+            if (Validating.enableBuyItems)
+                this.client.setScreen(new ItemsScreen(this));
         }).dimensions(centerX - BUTTON_WIDTH / 2, buttonStartY + 2 * buttonSpacing, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         // Add a button for "Inventory Saver"
@@ -73,35 +78,63 @@ public class MainScreen extends Screen {
         this.renderBackground(context);
 
         // Display username, mod update status, and time left at the top
-        String modStatus = Validating.isModUpToDate ? "Mod is up to date!" : "Mod is outdated. Please check Discord.";
-        long daysLeft = Validating.getDaysLeft();
-        long hoursLeft = Validating.getHoursLeft();
+        String modStatus = Validating.isModUpToDate() ? "Mod is up to date!" : "Mod is outdated. Please check Discord.";
 
-        String timeLeft = getFormattedTimeLeft(daysLeft, hoursLeft);
+        // Get the total time left in seconds
+        long totalSecondsLeft = Validating.getTimeLeft(ChronoUnit.SECONDS);
+
+        // Format the time left
+        String timeLeft = getFormattedTimeLeft(totalSecondsLeft);
 
         // Render the title
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 16777215);
 
         // Adjust Y position to avoid intersection with buttons
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(modStatus).setStyle(Style.EMPTY.withColor(Validating.isModUpToDate ? Formatting.GREEN : Formatting.RED)), this.width / 2, 50, 16777215);
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                Text.literal(modStatus).setStyle(Style.EMPTY.withColor(Validating.isModUpToDate() ? Formatting.GREEN : Formatting.RED)),
+                this.width / 2, 50, 16777215);
 
         // Render buttons and other screen elements
         super.render(context, mouseX, mouseY, delta);
 
         // Render the footer with username and time left, with more space for username
         String username = "Username: " + MinecraftClient.getInstance().getSession().getUsername();
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(username).setStyle(Style.EMPTY.withColor(Formatting.YELLOW)), this.width / 2, this.height - 50, 16777215); // Adjusted to be lower
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(timeLeft).setStyle(Style.EMPTY.withColor(Formatting.WHITE)), this.width / 2, this.height - 30, 16777215);
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                Text.literal(username).setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                this.width / 2, this.height - 50, 16777215); // Adjusted to be lower
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                Text.literal(timeLeft).setStyle(Style.EMPTY.withColor(Formatting.WHITE)),
+                this.width / 2, this.height - 30, 16777215);
     }
 
-    private String getFormattedTimeLeft(long daysLeft, long hoursLeft) {
-        if (daysLeft > 0) {
-            return String.format("Time left: %d days %d hours", daysLeft, hoursLeft % 24);
-        } else if (hoursLeft > 0) {
-            return String.format("Time left: %d hours", hoursLeft);
-        } else {
-            return "Expiry date has passed";
+    private String getFormattedTimeLeft(long totalSecondsLeft) {
+        if (totalSecondsLeft <= 0) {
+            return "Expiry date has passed"; // Handle case where no time is left
         }
+
+        long days = totalSecondsLeft / 86400; // 60 seconds * 60 minutes * 24 hours
+        totalSecondsLeft %= 86400;
+        long hours = totalSecondsLeft / 3600; // 60 seconds * 60 minutes
+        totalSecondsLeft %= 3600;
+        long minutes = totalSecondsLeft / 60; // 60 seconds
+        long seconds = totalSecondsLeft % 60; // Remaining seconds
+
+        // Build the formatted string
+        StringBuilder timeLeftBuilder = new StringBuilder();
+        if (days > 0) {
+            timeLeftBuilder.append(days).append("d ");
+        }
+        if (hours > 0) {
+            timeLeftBuilder.append(hours).append("h ");
+        }
+        if (minutes > 0) {
+            timeLeftBuilder.append(minutes).append("m ");
+        }
+        if (seconds > 0) {
+            timeLeftBuilder.append(seconds).append("s");
+        }
+
+        return timeLeftBuilder.toString().trim(); // Trim to remove any trailing space
     }
 
     @Override
