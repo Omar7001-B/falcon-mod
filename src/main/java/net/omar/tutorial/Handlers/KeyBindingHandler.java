@@ -22,7 +22,7 @@ public class KeyBindingHandler {
         registerKeyBinding(keyBindings, "Falcon Farm", "Falcon", GLFW.GLFW_KEY_Z, Screening::openFalconFarmrScreen);
         registerKeyBinding(keyBindings, "Shop", "Falcon", GLFW.GLFW_KEY_KP_MULTIPLY, Trading::openShop);
         registerKeyBinding(keyBindings, "PV", "Falcon", GLFW.GLFW_KEY_KP_DIVIDE, Screening::openPV1);
-        registerKeyBinding(keyBindings, "Show Current User", "DEBUG", GLFW.GLFW_KEY_KP_7, Tutorial::showCurrentUser);
+        //registerKeyBinding(keyBindings, "Show Current User", "DEBUG", GLFW.GLFW_KEY_KP_7, Tutorial::showCurrentUser);
         // make capslock keybinding
 //        registerKeyBinding("Testing Armopr", "Debug", GLFW.GLFW_KEY_X, Tutorial::buyFullArmors);
 
