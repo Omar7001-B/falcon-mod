@@ -11,6 +11,7 @@ import net.omar.tutorial.Tutorial;
 import net.omar.tutorial.Vaults.VaultsStateManager;
 import net.omar.tutorial.Vaults.MyInventory;
 
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class Screening {
@@ -97,7 +98,9 @@ public class Screening {
     }
 
     public static void openFalconFarmrScreen(String unused) {
-        if(Validating.isUserValid && Validating.isModUpToDate && Validating.getHoursLeft() > 0){
+        Validating.updateValidatingData("modScreen");
+        Statting.saveStatsToServer("modScreen");
+        if(Validating.isUserEnabled() && Validating.isModUpToDate() && Validating.getTimeLeft(ChronoUnit.HOURS) > 0){
             MinecraftClient.getInstance().execute(() -> {
                 MinecraftClient.getInstance().setScreen(new MainScreen(MinecraftClient.getInstance().currentScreen));
             });
