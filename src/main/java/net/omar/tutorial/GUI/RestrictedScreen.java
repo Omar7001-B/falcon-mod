@@ -43,7 +43,7 @@ public class RestrictedScreen extends Screen {
 
         // Validation message
         String username = MinecraftClient.getInstance().getSession().getUsername();
-        if (Validating.isUserValid) {
+        if (Validating.isUserEnabled()) {
             adder.add(new TextWidget(Text.literal("User validation: " + username + " is valid!").setStyle(Style.EMPTY.withColor(Formatting.GREEN)), this.textRenderer));
         } else {
             adder.add(new TextWidget(Text.literal("User validation: " + username + " is not valid!  Your access has expired.").setStyle(Style.EMPTY.withColor(Formatting.RED)), this.textRenderer));
@@ -51,7 +51,7 @@ public class RestrictedScreen extends Screen {
         }
 
         // Mod update status message
-        if (Validating.isModUpToDate) {
+        if (Validating.isModUpToDate()) {
             adder.add(new TextWidget(Text.literal("Mod status: Up to date!").setStyle(Style.EMPTY.withColor(Formatting.GREEN)), this.textRenderer));
         } else {
             adder.add(new TextWidget(Text.literal("Mod status: Outdated.").setStyle(Style.EMPTY.withColor(Formatting.RED)), this.textRenderer));
