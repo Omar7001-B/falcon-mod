@@ -388,11 +388,10 @@ public class Trading {
         Debugging.Shulker("(BuyAmountOfItemIntoShulker) Trade: " + trade.toString() + " Amount: " + amount);
         if(amount < 1) return;
         String outputName = Naming.offerNamesToInventoryNames(trade.resultName);
-        if(Inventorying.countItemByNameInInventory(outputName) > 0)
-            Inventorying.forceCompleteItemsToShulkers(Map.of(outputName, 9999));
-        Debugging.Shulker("Trade: " + trade.toString() + " Amount: " + amount);
         int notHaveMaterial = 0;
         while (amount > 0 && notHaveMaterial < 2)  {
+            Map<String, Integer> inventoryBefore = new HashMap<>(Inventorying.getInventoryMap());
+            Debugging.Shulker("Inventory Before Buy: " + inventoryBefore);
             int input = Math.min(calcMaxTradeInputForInventory(List.of(trade)), calcInputNeed(trade, amount));
             notHaveMaterial += Inventorying.forceCompleteItemsToInventory(trade.firstItemName, input) ? 0 : 1;
 
@@ -403,13 +402,23 @@ public class Trading {
             int normalClicks = (int)Math.ceil((double)(amount % shiftAmount)/normalAmount);
 
             executeTrade(List.of(Triple.of(trade, shiftClicks, normalClicks)));
-            int output = Inventorying.countItemByNameInInventory(outputName);
+            Map<String, Integer> inventoryAfter = new HashMap<>(Inventorying.getInventoryMap());
+            Debugging.Shulker("Inventory Before Buy: " + inventoryAfter);
+            Map<String, Integer> outputMaterial = new HashMap<>(Inventorying.getInventoryChanges(inventoryBefore, inventoryAfter));
+
+            Debugging.Shulker("New Items After Buy: " + outputMaterial);
+
+            // #TODO fix this later
+            int output = outputMaterial.entrySet() .stream().findFirst().map(Map.Entry::getValue).orElse(0); // Assuming only one element will be  in the map (not the best but I made a fast solution)
+            Debugging.Shulker("First  Item: " + output);
+
             //DEBUG.Shulker("Name : " + trade.resultName + " > " + NameConverter.offerNamesToInventoryNames(trade.resultName) + " Output: " + output);
             //DEBUG.Shulker("Before Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
             amount -= output;
             Statting.addItemStat(trade.resultName, output);
             //DEBUG.Shulker("After Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
-            Inventorying.forceCompleteItemsToShulkers(Map.of(outputName, 9999));
+
+            Inventorying.forceCompleteItemsToShulkers(outputMaterial);
         }
     }
 }
