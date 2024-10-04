@@ -17,7 +17,7 @@ public class Validating {
     public static boolean isParsed = false;
 
     private static final String API_URL = "https://rest-api-back.vercel.app/mod/subscriber/";
-    private static final String CURRENT_VERSION = "1.1.0";
+    private static final String CURRENT_VERSION = "1.1.1";
     private static String current_user =  MinecraftClient.getInstance().getSession().getUsername();
 
     // User validation data
