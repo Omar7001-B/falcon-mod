@@ -82,7 +82,12 @@ public class Inventorying {
 
         while(sourceAmount > 0 && amount > 0) {
             int targetIndex = Slotting.getSlotToComplete(sourceName, targetIndexes);
-            if (targetIndex == -1) return amount;
+            Debugging.Slots("Sorce Index: " + sourceIndex + ", Target: " + targetIndex);
+            //Debugging.Slots("Source: " + Slotting.getSlotNameByIndex(sourceIndex) + ", Target: " + Slotting.getSlotNameByIndex(targetIndex));
+            if (targetIndex == -1) {
+                Clicking.slotNormalClick(sourceIndex);
+                return amount;
+            }
             int availableAmountSpace = 64 - Slotting.getElementAmountByIndex(targetIndex);
             int transferAmount = Math.min(availableAmountSpace, Math.min(sourceAmount, amount));
             if(Math.min(availableAmountSpace, sourceAmount) <= amount) {
@@ -220,9 +225,7 @@ public class Inventorying {
 
     public static boolean forceCompleteItemsToInventory(Map<String, Integer> itemsAmount){
         Debugging.Force("Force Complete Items To Inventory: " + itemsAmount);
-        if(isEmptyMap(itemsAmount)){
-            return false;
-        }
+        if(isEmptyMap(itemsAmount)){ return false; }
         for(Map.Entry<String, Integer> entry : itemsAmount.entrySet())
             if(!forceCompleteItemsToInventory(entry.getKey(), entry.getValue()))
                 return false;
