@@ -219,7 +219,10 @@ public class Inventorying {
     }
 
     public static boolean forceCompleteItemsToInventory(Map<String, Integer> itemsAmount){
-        Debugging.Save("Force Complete Items To Inventory: " + itemsAmount);
+        Debugging.Force("Force Complete Items To Inventory: " + itemsAmount);
+        if(isEmptyMap(itemsAmount)){
+            return false;
+        }
         for(Map.Entry<String, Integer> entry : itemsAmount.entrySet())
             if(!forceCompleteItemsToInventory(entry.getKey(), entry.getValue()))
                 return false;
@@ -271,6 +274,30 @@ public class Inventorying {
         }
 
         return result;
+    }
+
+
+    public static Map<String, Integer> getInventoryMap() {
+        Map<String, Integer> items = new HashMap<>();
+        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
+        for (int i = 0; i < inventory.size(); i++) {
+            ItemStack stack = inventory.getStack(i);
+            if (!stack.isEmpty()) {
+                String itemName = stack.getItem().getName().getString().toLowerCase().replace("_", " ");
+                items.put(itemName, items.getOrDefault(itemName, 0) + stack.getCount());
+            }
+        }
+        return items;
+    }
+
+    public static Map<String, Integer> getInventoryChanges(Map<String, Integer> before, Map<String, Integer> after) {
+        Map<String, Integer> newItems = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : after.entrySet()) {
+            String itemName = entry.getKey();
+            if (!before.containsKey(itemName))
+                newItems.put(itemName, entry.getValue());
+        }
+        return newItems;
     }
 
     public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount) {

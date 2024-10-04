@@ -366,17 +366,11 @@ public class Trading {
             return false;
         }
 
+        Map<String, Integer> inventoryBefore = new HashMap<>(Inventorying.getInventoryMap());
         buyItem(node, 0, count);
+        Map<String, Integer> inventoryAfter = new HashMap<>(Inventorying.getInventoryMap());
 
-        Map<String, Integer> outputMaterial = new HashMap<>();
-
-        if (!node.children.isEmpty())
-            for (Shopper child : node.children)
-                for (Trader trade : child.trades)
-                    outputMaterial.put(trade.resultName, trade.resultAmount * count);
-        else if (!node.trades.isEmpty())
-            for (Trader trade : node.trades)
-                outputMaterial.put(trade.resultName, trade.resultAmount * count);
+        Map<String, Integer> outputMaterial = new HashMap<>(Inventorying.getInventoryChanges(inventoryBefore, inventoryAfter));
 
         Debugging.Shulker("Output Material: " + outputMaterial.toString());
         Inventorying.forceCompleteItemsToShulkers(outputMaterial);
