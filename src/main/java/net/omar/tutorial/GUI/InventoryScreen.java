@@ -2,6 +2,7 @@ package net.omar.tutorial.GUI;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.stat.Stat;
@@ -86,6 +87,18 @@ public class InventoryScreen extends Screen {
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Back"), button -> {
             this.client.setScreen(this.parent);
         }).dimensions(centerX - BUTTON_WIDTH / 2, backButtonStartY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Draw a dark transparent background
+        context.fill(0, 0, this.width, this.height, 0x80000000); // 0x80 is the alpha value for transparency
+
+        // Render the screen title
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 16777215);
+
+        // Render buttons and other screen elements
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
