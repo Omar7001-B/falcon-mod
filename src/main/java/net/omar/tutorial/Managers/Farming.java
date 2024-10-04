@@ -40,12 +40,21 @@ public class Farming {
             //DEBUG.Shulker("Inside loop: " + outputItem + " into " + shulker + " Shulker: " + shulkerFarmedCount);
 
             int cycleInput = Trading.calcMaxTradeInputForInventory(cycleTrades);
-            takeItems(Map.of(cycleItem, amountToCompleteInventory(cycleItem, cycleInput)), shulker, true);
+            Map<String,Integer>remainingItems = takeItems(Map.of(cycleItem, amountToCompleteInventory(cycleItem, cycleInput)), shulker, true);
+            int actualInputTaken = cycleInput - remainingItems.get(cycleItem);
 
             boolean isShulkerFull = VaultsStateManager.Shulker(shulker).filledSlots > 25;
             if (isShulkerFull) {
                 //DEBUG.Shulker("Shulker is full: " + shulker);
+                int cycleRemaining = 0;
+                if(!outputItem.equals(cycleItem)){
+                    int cycleItemToTake = 2000;
+                    int remaings = takeItems(Map.of(cycleItem, cycleItemToTake), shulker, false).get(cycleItem);
+                     cycleRemaining = cycleItemToTake - remaings;
+                }
+
                 sendItems(Map.of(shulker, 1), MyPV.PV1, true);
+                forceCompleteItemsToShulkers(Map.of(cycleItem, cycleRemaining));
                 shulkerFarmedCount++;
                 VaultsStateManager.Shulker(shulker).reset();
                 if (shulkerFarmedCount >= numberOfShulkers) return;
@@ -59,6 +68,10 @@ public class Farming {
             if(emptySlots == 0){
                 Saving.sendAllItemsToShulkers();
                 Inventorying.forceCompleteItemsToInventory(cycleItem, cycleInput);
+            }
+
+            if(Inventorying.countItemByNameInInventory(cycleItem) < 16){
+                Inventorying.forceCompleteItemsToInventory(Map.of(cycleItem, cycleInput));
             }
 
             // Execute trade for each item in cycleTrades
@@ -80,9 +93,12 @@ public class Farming {
             }
 
             int outputAmount = VaultsStateManager.Inventory(MyInventory.NAME).getItemCountByName(outputItem)- (outputItem.equals(cycleItem) ? cycleInput : 0);
-            Statting.addFarmingStat(outputItem, outputAmount);
 
-            sendItems(new LinkedHashMap<>(Map.of((outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000, cycleItem, 1000)), shulker, true);
+            remainingItems = sendItems(new LinkedHashMap<>(Map.of((outputItem.equals(cycleItem) ? "ZZZZZZZ" : outputItem), 1000, cycleItem, 1000)), shulker, true);
+            int outputSent = 1000 - remainingItems.get(outputItem) - (cycleItem == outputItem ?  actualInputTaken : 0);
+            Debugging.Statting("Cycle Input Taken of " + cycleItem  + " : " + actualInputTaken);
+            Debugging.Statting("      Output sent of " + outputItem  + " : " + actualInputTaken);
+            Statting.addFarmingStat(outputItem, outputSent);
         }
     }
 
