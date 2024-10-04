@@ -74,6 +74,7 @@ public class Inventorying {
     public static int moveCompleteItem(int sourceIndex, List<Integer> targetIndexes, int amount) {
         DefaultedList<Slot> slots = Slotting.getSlots();
         if (slots == null) return amount;
+        if(Slotting.countEmptySlots(targetIndexes) == 0) return amount;
 
         int sourceAmount = Slotting.getElementAmountByIndex(sourceIndex);
         String sourceName = Slotting.getSlotNameByIndex(sourceIndex);
@@ -236,6 +237,7 @@ public class Inventorying {
         // This function will take items from  PV and shulkers and shukers in PV to complete the required amount into the inventory
         // Starts with PV1 then shulkers then PV1 shulkers
         Debugging.Force("Force Complete Items To Inventory: " + itemName + " -> " + amount);
+        if(countEmptySlotsInMainInventory() < 2) return false;
         if(amountToCompleteInventory(itemName, amount) > 0)
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), MyPV.PV1, false);
 
@@ -250,7 +252,7 @@ public class Inventorying {
 
 
         int numShulkers = Math.min(2, VaultsStateManager.PV(MyPV.PV1).getItemCountByName(shulkerName));
-        while(numShulkers > 0 && amountToCompleteInventory(itemName, amount) > 0) {
+        while(numShulkers > 0 && amountToCompleteInventory(itemName, amount) > 0 && countEmptySlotsInMainInventory() > 1) {
             takeItems(Map.of(shulkerName, 1), MyPV.PV1, true);
             takeItems(Map.of(itemName, amountToCompleteInventory(itemName, amount)), shulkerName, false);
             if(VaultsStateManager.Shulker(shulkerName).getItemCountByName(itemName) > 0)
@@ -283,8 +285,8 @@ public class Inventorying {
     public static Map<String, Integer> getInventoryMap() {
         Map<String, Integer> items = new HashMap<>();
         PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack stack = inventory.getStack(i);
+        for (int i = 0; i < inventory.main.size(); i++) {
+            ItemStack stack = inventory.main.get(i);
             if (!stack.isEmpty()) {
                 String itemName = stack.getItem().getName().getString().toLowerCase().replace("_", " ");
                 items.put(itemName, items.getOrDefault(itemName, 0) + stack.getCount());
@@ -294,13 +296,25 @@ public class Inventorying {
     }
 
     public static Map<String, Integer> getInventoryChanges(Map<String, Integer> before, Map<String, Integer> after) {
-        Map<String, Integer> newItems = new HashMap<>();
+        Map<String, Integer> inventoryChanges = new HashMap<>();
+
         for (Map.Entry<String, Integer> entry : after.entrySet()) {
             String itemName = entry.getKey();
-            if (!before.containsKey(itemName))
-                newItems.put(itemName, entry.getValue());
+            int afterAmount = entry.getValue();
+
+            if (!before.containsKey(itemName)) {
+                inventoryChanges.put(itemName, afterAmount);
+            } else {
+                int beforeAmount = before.get(itemName);
+                int changeAmount = afterAmount - beforeAmount;
+
+                if (changeAmount > 0) {
+                    inventoryChanges.put(itemName, changeAmount);
+                }
+            }
         }
-        return newItems;
+
+        return inventoryChanges;
     }
 
     public static void forceCompleteItemsToShulkers(Map<String, Integer> itemsAmount) {
@@ -405,4 +419,20 @@ public class Inventorying {
         }
         return count;
     }
+
+    public static int countEmptySlotsInMainInventory() {
+        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
+        int emptySlots = 0;
+
+        // The main inventory consists of 36 slots (indices 0 to 35)
+        for (int i = 0; i < inventory.main.size(); i++) {
+            ItemStack stack = inventory.main.get(i);
+            if (stack.isEmpty()) {
+                emptySlots++;
+            }
+        }
+
+        return emptySlots;
+    }
+
 }
