@@ -37,7 +37,7 @@ public class Slotting {
             indexes = IntStream.range(0, slots.size()).boxed().collect(Collectors.toList());
         }
 
-        Inventorying.LOGGER.info("Showing slots:");
+        Debugging.Slots("Showing slots:");
         indexes.forEach(index -> {
             Slot slot = slots.get(index);
             Debugging.Slots("Slot Index: " + index);
