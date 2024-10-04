@@ -395,7 +395,14 @@ public class Trading {
         while (amount > 0 && notHaveMaterial < 2)  {
             int input = Math.min(calcMaxTradeInputForInventory(List.of(trade)), calcInputNeed(trade, amount));
             notHaveMaterial += Inventorying.forceCompleteItemsToInventory(trade.firstItemName, input) ? 0 : 1;
-            executeTrade(List.of(Triple.of(trade, 9999, 0)));
+
+            int shiftAmount = (64 / trade.firstItemAmount) * trade.resultAmount;
+            int normalAmount = trade.resultAmount;
+
+            int shiftClicks = amount / shiftAmount;
+            int normalClicks = (int)Math.ceil((double)(amount % shiftAmount)/normalAmount);
+
+            executeTrade(List.of(Triple.of(trade, shiftClicks, normalClicks)));
             int output = Inventorying.countItemByNameInInventory(outputName);
             //DEBUG.Shulker("Name : " + trade.resultName + " > " + NameConverter.offerNamesToInventoryNames(trade.resultName) + " Output: " + output);
             //DEBUG.Shulker("Before Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
