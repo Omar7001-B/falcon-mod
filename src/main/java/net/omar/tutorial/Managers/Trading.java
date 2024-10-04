@@ -15,8 +15,6 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.*;
 
-import static net.omar.tutorial.Managers.Inventorying.*;
-
 
 public class Trading {
 
@@ -336,8 +334,8 @@ public class Trading {
         for (Map.Entry<String, Integer> entry : materialNeeded.entrySet())
             materialNeeded.put(entry.getKey(), entry.getValue() * count);
 
-        if (!forceCompleteItemsToInventory(materialNeeded)) {
-            forceCompleteItemsToShulkers(materialNeeded);
+        if (!Inventorying.forceCompleteItemsToInventory(materialNeeded)) {
+            Inventorying.forceCompleteItemsToShulkers(materialNeeded);
             return false;
         }
 
@@ -345,7 +343,7 @@ public class Trading {
 
         Map<String, Integer> outputMaterial = new HashMap<>();
         outputMaterial.put(trade.resultName, trade.resultAmount * count);
-        forceCompleteItemsToShulkers(outputMaterial);
+        Inventorying.forceCompleteItemsToShulkers(outputMaterial);
         String type = Naming.determineMaterialType(outputMaterial);
         Statting.addGearStat(type, count);
         return true;
@@ -363,8 +361,8 @@ public class Trading {
 
         Debugging.Shulker("Material Needed: " + materialNeeded.toString());
 
-        if (!forceCompleteItemsToInventory(materialNeeded)) {
-            forceCompleteItemsToShulkers(materialNeeded);
+        if (!Inventorying.forceCompleteItemsToInventory(materialNeeded)) {
+            Inventorying.forceCompleteItemsToShulkers(materialNeeded);
             return false;
         }
 
@@ -381,7 +379,7 @@ public class Trading {
                 outputMaterial.put(trade.resultName, trade.resultAmount * count);
 
         Debugging.Shulker("Output Material: " + outputMaterial.toString());
-        forceCompleteItemsToShulkers(outputMaterial);
+        Inventorying.forceCompleteItemsToShulkers(outputMaterial);
         String type = Naming.determineMaterialType(outputMaterial);
         Statting.addGearStat(type, count);
         return true;
@@ -396,21 +394,21 @@ public class Trading {
         Debugging.Shulker("(BuyAmountOfItemIntoShulker) Trade: " + trade.toString() + " Amount: " + amount);
         if(amount < 1) return;
         String outputName = Naming.offerNamesToInventoryNames(trade.resultName);
-        if(countItemByNameInInventory(outputName) > 0)
-            forceCompleteItemsToShulkers(Map.of(outputName, 9999));
+        if(Inventorying.countItemByNameInInventory(outputName) > 0)
+            Inventorying.forceCompleteItemsToShulkers(Map.of(outputName, 9999));
         Debugging.Shulker("Trade: " + trade.toString() + " Amount: " + amount);
         int notHaveMaterial = 0;
         while (amount > 0 && notHaveMaterial < 2)  {
             int input = Math.min(calcMaxTradeInputForInventory(List.of(trade)), calcInputNeed(trade, amount));
-            notHaveMaterial += forceCompleteItemsToInventory(trade.firstItemName, input) ? 0 : 1;
+            notHaveMaterial += Inventorying.forceCompleteItemsToInventory(trade.firstItemName, input) ? 0 : 1;
             executeTrade(List.of(Triple.of(trade, 9999, 0)));
-            int output = countItemByNameInInventory(outputName);
+            int output = Inventorying.countItemByNameInInventory(outputName);
             //DEBUG.Shulker("Name : " + trade.resultName + " > " + NameConverter.offerNamesToInventoryNames(trade.resultName) + " Output: " + output);
             //DEBUG.Shulker("Before Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
             amount -= output;
             Statting.addItemStat(trade.resultName, output);
             //DEBUG.Shulker("After Sub: Amount: " + amount + " Input: " + input + " Output: " + output + " Inventory: " + InventorySaver.Inventory(MyInventory.NAME).itemCounts);
-            forceCompleteItemsToShulkers(Map.of(outputName, 9999));
+            Inventorying.forceCompleteItemsToShulkers(Map.of(outputName, 9999));
         }
     }
 }
