@@ -4,7 +4,7 @@
 
 ![Falcon Mod](https://github.com/user-attachments/assets/83dfdbb2-ede7-4b7b-ab29-8cad281ca87a)
 
-*A powerful Minecraft automation mod for Box PvP servers*
+*A Minecraft mod that enhances Box PvP gameplay by automating shop operations, trading, inventory management, and bulk item purchases*
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.X-brightgreen.svg)](https://minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.83.0-blue.svg)](https://fabricmc.net/)
@@ -14,7 +14,7 @@
 
 ## 📋 Overview
 
-Falcon Mod streamlines Box PvP server operations through legitimate automation of inventory and shop management. Built for efficiency while respecting server rules.
+Falcon Mod is designed specifically for Minecraft Box PvP gameplay, offering powerful automation for common tasks. It speeds up shopping, trading, and inventory management while making bulk purchases effortless. Perfect for players who want to spend less time on repetitive tasks and more time on actual PvP gameplay.
 
 ## ⚙️ Compatibility
 
