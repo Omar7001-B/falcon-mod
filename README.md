@@ -62,45 +62,41 @@ This mod is designed to automate legitimate player actions only. It:
 - Enables quick recovery of saved states
 - Maintains organization across sessions
 
-## Detailed Component Structure
+## Interface Pages
 
-```
-src/main/java/net/omar/tutorial/
-├── Managers/
-│   ├── Clicking.java        # Mouse click handling
-│   ├── Debugging.java       # Debug functionality
-│   ├── Farming.java         # Farming mechanics
-│   ├── Inventorying.java    # Inventory management
-│   ├── Naming.java         # Name management
-│   ├── Olding.java         # Legacy system handling
-│   ├── Saving.java         # Save system
-│   ├── Screening.java      # Screen management
-│   ├── Shulkering.java     # Shulker box handling
-│   ├── Slotting.java       # Slot management
-│   ├── Statting.java       # Statistics handling
-│   ├── Trading.java        # Trading system
-│   └── Validating.java     # Validation system
-├── Handlers/
-│   ├── ChatMessageHandler.java    # Chat message processing
-│   ├── KeyBindingHandler.java     # Key binding management
-│   └── KeyPressingHandler.java    # Key press processing
-└── GUI/
-    ├── FalconStatsScreen.java     # Statistics display
-    ├── FarmScreen.java           # Farming interface
-    ├── GearScreen.java           # Equipment management
-    ├── InventoryScreen.java      # Inventory interface
-    ├── ItemsScreen.java          # Item management
-    ├── MainScreen.java           # Main menu
-    ├── RestrictedScreen.java     # Access control interface
-    ├── SimpleButtonScreen.java   # Basic button interface
-    └── TakeItemsScreen.java      # Item collection interface
-```
+### Main Menu
+- Farm Material - Farming resources management
+- Buy Gear - Equipment purchasing interface
+- Buy Items - General item shopping
+- Inventory - Inventory management tools
+- Join Discord - Community access
+- Back - Return to previous screen
 
-## Prerequisites
+### Buy Gear
+- Armor: Zero
+- Elytra: Zero
+- Sword: Zero
+- Pickaxe: Zero
+- Axe: Zero
+- Bow: Zero
+- Shears: Zero
 
-- Java 17 or higher
-- Minecraft 1.20
-- Fabric Loader 0.16.2+
+### Buy Items
+- Arrow of Harming Zero
+- Cobweb Zero
+- Potion of Strength Zero
+- Totem of Undying Zero
+- Enchanted Golden Apple Zero
+- Firework Zero
+- Obsidian Zero
+
+### Inventory 
+- Falcon Statistics - View mod usage stats
+- Save Inventory - Store current inventory state
+- Recover Inventory - Restore saved inventory
+- Send Inventory - Transfer items
+- Complete Inventory - Full inventory operations
+- Back - Return to main menu
 
 ## Installation
 
@@ -136,24 +132,48 @@ The built jar file will be in `build/libs/`.
 
 ```
 src/main/java/net/omar/tutorial/
-├── GUI/           # Custom GUI implementations
-├── Handlers/      # Event and system handlers
-├── Managers/      # Various management systems
-├── Recovery/      # Recovery system implementation
-├── Vaults/        # Vault system
-├── Data/          # Data management
-└── mixin/         # Minecraft code modifications
+├── Data/
+│   ├── Market.java          # Market data and operations
+│   └── Indexes.java         # Index management system
+├── GUI/
+│   ├── FalconStatsScreen.java     # Statistics display
+│   ├── FarmScreen.java            # Farming interface
+│   ├── GearScreen.java            # Equipment management
+│   ├── InventoryScreen.java       # Inventory interface
+│   ├── ItemsScreen.java           # Item management
+│   ├── MainScreen.java            # Main menu
+│   ├── RestrictedScreen.java      # Access control interface
+│   ├── SimpleButtonScreen.java    # Basic button interface
+│   └── TakeItemsScreen.java       # Item collection interface
+├── Handlers/
+│   ├── ChatMessageHandler.java    # Chat message processing
+│   ├── KeyBindingHandler.java     # Key binding management
+│   └── KeyPressingHandler.java    # Key press processing
+├── Managers/
+│   ├── Clicking.java             # Mouse click handling
+│   ├── Debugging.java            # Debug functionality
+│   ├── Farming.java              # Farming mechanics
+│   ├── Inventorying.java         # Inventory management
+│   ├── Naming.java               # Name management
+│   ├── Olding.java               # Legacy system handling
+│   ├── Saving.java               # Save system
+│   ├── Screening.java            # Screen management
+│   ├── Shulkering.java           # Shulker box handling
+│   ├── Slotting.java             # Slot management
+│   ├── Statting.java             # Statistics handling
+│   ├── Trading.java              # Trading system
+│   └── Validating.java           # Validation system
+├── Recovery/
+│   └── Shulkery.java             # Shulker box recovery system
+├── Vaults/
+│   ├── MyInventory.java          # Personal inventory management
+│   ├── MyPV.java                 # Personal vault handling
+│   ├── MyShulker.java            # Shulker box management
+│   └── VaultsStateManager.java    # Vault state coordination
+└── classes/
+    ├── Trader.java               # Trading functionality
+    └── Shopper.java              # Shopping functionality
 ```
-
-## Dependencies
-
-- Minecraft (1.20)
-- Fabric Loader (0.16.2)
-- Fabric API (0.83.0+1.20)
-
-## License
-
-This project is licensed under MIT License - see the LICENSE file for details.
 
 ## Contributing
 
