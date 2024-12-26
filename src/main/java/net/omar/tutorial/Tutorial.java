@@ -12,7 +12,7 @@ import net.omar.tutorial.Managers.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.*;
 
 
 public class Tutorial implements ModInitializer {
@@ -63,24 +63,12 @@ public class Tutorial implements ModInitializer {
     }
 
     public static void showCurrentUser(String s) {
-        //Trading.executeTrade(Market.rawgoldToPurpleBox_t);
-        //Trading.buyItem(Market.rawgoldToPurpleBox_t, 0, 1);
-
-        //Trading.getMaterialAndBuyItem(Market.rawgoldToPurpleBox_t, 1);
         if(!s.equals("Init Event")){
-            Statting.addFarmingStat("Gold Nugget", 5);
-            Statting.addItemStat("Potion of Strength", 1);
-            Statting.addGearStat("Sword", 1);
+//            Statting.addFarmingStat("Gold Nugget", 5);
+//            Statting.addItemStat("Potion of Strength", 1);
+//            Statting.addGearStat("Sword", 1);
         }
 
-        /*
-        private final String username;
-        private final String uuid;
-        private final String accessToken;
-        private final Optional<String> xuid;
-        private final Optional<String> clientId;
-        private final Session.AccountType accountType;
-         */
         Debugging.Validation("Username: " + MinecraftClient.getInstance().getSession().getUsername());
         Debugging.Validation("UUID: " + MinecraftClient.getInstance().getSession().getUuid());
         Debugging.Validation("Access Token: " + MinecraftClient.getInstance().getSession().getAccessToken());
