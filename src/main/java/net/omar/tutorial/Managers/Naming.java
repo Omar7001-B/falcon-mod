@@ -6,7 +6,7 @@ import java.util.Map;
 public class Naming {
 
     private static final Map<String, String> wordsMap = new HashMap<>();
-    private static final String[] NON_STACKABLE_KEYWORDS = {"potion", "cap", "tunic", "pants", "boots", "totem" ,"bow", "sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker", "elytra"};
+    private static final String[] NON_STACKABLE_KEYWORDS = {"shears", "potion", "cap", "tunic", "pants", "boots", "totem" ,"bow", "sword", "pickaxe", "axe", "helmet", "chestplate", "leggings", "boots", "shulker", "elytra"};
 
     static {
         wordsMap.put("ᴄᴏᴍᴘʀᴇssᴇᴅ ʀᴀᴡ ɢᴏʟᴅ", "Raw Gold");
