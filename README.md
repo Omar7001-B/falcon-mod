@@ -1,191 +1,139 @@
-# Falcon Mod - Box PvP Server Automation
-### For Minecraft 1.20.X
+# 🦅 Falcon Mod
 
-A Minecraft Fabric mod designed to enhance and automate inventory and shop operations for Box PvP servers. Falcon Mod streamlines repetitive tasks while adhering to server rules, focusing on legitimate automation of manual actions.
+<div align="center">
 
-<img src="https://github.com/user-attachments/assets/83dfdbb2-ede7-4b7b-ab29-8cad281ca87a" alt="Sample Image" style="width:50%; height:auto;">
+![Falcon Mod](https://github.com/user-attachments/assets/83dfdbb2-ede7-4b7b-ab29-8cad281ca87a)
 
+*A powerful Minecraft automation mod for Box PvP servers*
 
-## Compatibility
-- Minecraft: 1.20.X (1.20, 1.20.1, 1.20.2)
-- Fabric API: 0.83.0+1.20
-- Fabric Loader: 0.16.2+
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.X-brightgreen.svg)](https://minecraft.net/)
+[![Fabric](https://img.shields.io/badge/Fabric-0.83.0-blue.svg)](https://fabricmc.net/)
+[![GitHub](https://img.shields.io/badge/GitHub-falcon--mod-orange.svg)](https://github.com/Omar7001-B/falcon-mod)
 
-## Key Features
+</div>
 
-- **Fast Shopping System**
-  - Quick `/shop` command navigation
-  - Bulk item purchasing automation
-  - Smart gear/tools/items buying presets
-  - Automatic inventory management during purchases
+## 📋 Overview
 
-- **Inventory Management**
-  - Fast item compression/decompression
-  - Automatic shulker box packing
-  - Smart inventory saving and recovery system
-  - PV (Personal Vault) integration
+Falcon Mod streamlines Box PvP server operations through legitimate automation of inventory and shop management. Built for efficiency while respecting server rules.
 
-- **Smart Memory System**
-  - Save entire inventory states
-  - Automatic shulker box organization
-  - Quick inventory state recovery
-  - PV location memory and management
+## ⚙️ Compatibility
 
-- **Trade Optimization**
-  - Complex trade calculations
-  - Automatic resource requirement calculation
-  - Efficient multi-step trade planning
-  - Fast button clicking and navigation
+| Component | Version |
+|-----------|---------|
+| Minecraft | 1.20.X (1.20, 1.20.1, 1.20.2) |
+| Fabric API | 0.83.0+1.20 |
+| Fabric Loader | 0.16.2+ |
 
-## Important Note
+## ✨ Key Features
 
-This mod is designed to automate legitimate player actions only. It:
-- Does NOT include any illegal features or hacks
-- Only automates normal mouse movements and clicks
-- Respects server rules and mechanics
-- Focuses on efficiency, not exploitation
+<table>
+<tr>
+<td width="50%">
 
-## How It Works
+### 🛒 Fast Shopping
+- Quick `/shop` navigation
+- Bulk purchasing automation
+- Smart buying presets
+- Auto inventory management
 
-### Shopping Automation
-- Fast navigation through shop menus
-- Bulk purchase automation with inventory management
-- Automatic item compression and decompression
-- Smart distribution to inventory/shulker boxes
+</td>
+<td width="50%">
 
-### Inventory Management
-- One-click inventory saving to shulker boxes
-- Automatic storage in designated PV slots
-- Complete inventory state recovery
-- Smart item organization and management
+### 📦 Inventory Management
+- Fast item compression
+- Auto shulker packing
+- Smart save/recovery
+- PV integration
 
-### Memory System
-- Saves inventory layouts and contents
-- Records item positions and configurations
-- Enables quick recovery of saved states
-- Maintains organization across sessions
+</td>
+</tr>
+<tr>
+<td>
 
-## Interface Pages
+### 💾 Memory System
+- Save inventory states
+- Auto organization
+- Quick state recovery
+- PV location tracking
+
+</td>
+<td>
+
+### 💹 Trade Optimization
+- Complex calculations
+- Resource planning
+- Multi-step trades
+- Fast execution
+
+</td>
+</tr>
+</table>
+
+## ⚠️ Important Note
+
+This mod is designed for legitimate automation only:
+- ✅ Automates normal player actions
+- ✅ Respects server rules
+- ✅ Focuses on efficiency
+- ❌ No illegal features or hacks
+
+## 🖥️ Interface Guide
 
 ### Main Menu
-- Farm Material - Farming resources management
-- Buy Gear - Equipment purchasing interface
-- Buy Items - General item shopping
-- Inventory - Inventory management tools
-- Join Discord - Community access
-- Back - Return to previous screen
+| Option | Description |
+|--------|-------------|
+| Farm Material | Manage farming resources |
+| Buy Gear | Purchase equipment |
+| Buy Items | Shop for items |
+| Inventory | Manage inventory |
+| Join Discord | Connect with community |
 
-### Buy Gear
-- Armor: Zero
-- Elytra: Zero
-- Sword: Zero
-- Pickaxe: Zero
-- Axe: Zero
-- Bow: Zero
-- Shears: Zero
+### Buy Gear Interface
+| Equipment | Status |
+|-----------|--------|
+| Armor | Zero |
+| Elytra | Zero |
+| Sword | Zero |
+| Pickaxe | Zero |
+| Axe | Zero |
+| Bow | Zero |
+| Shears | Zero |
 
-### Buy Items
-- Arrow of Harming Zero
-- Cobweb Zero
-- Potion of Strength Zero
-- Totem of Undying Zero
-- Enchanted Golden Apple Zero
-- Firework Zero
-- Obsidian Zero
+### Buy Items Interface
+| Item | Status |
+|------|--------|
+| Arrow of Harming | Zero |
+| Cobweb | Zero |
+| Potion of Strength | Zero |
+| Totem of Undying | Zero |
+| Enchanted Golden Apple | Zero |
+| Firework | Zero |
+| Obsidian | Zero |
 
-### Inventory 
-- Falcon Statistics - View mod usage stats
-- Save Inventory - Store current inventory state
-- Recover Inventory - Restore saved inventory
-- Send Inventory - Transfer items
-- Complete Inventory - Full inventory operations
-- Back - Return to main menu
+### Inventory Management
+| Feature | Function |
+|---------|----------|
+| Falcon Statistics | View usage stats |
+| Save Inventory | Store current state |
+| Recover Inventory | Restore saved state |
+| Send Inventory | Transfer items |
+| Complete Inventory | Full operations |
 
-## Installation
+## 📥 Project Structure
 
-1. Install the [Fabric Loader](https://fabricmc.net/use/) if you haven't already
-2. Download the latest release of this mod
-3. Place the downloaded .jar file in your Minecraft mods folder
-4. Launch Minecraft with the Fabric profile
-
-## Development Setup
-
-1. Clone this repository
-2. Open a terminal in the project directory
-3. Run the following commands based on your IDE:
-   ```bash
-   # For IntelliJ IDEA
-   ./gradlew genIdeaRuns
-   
-   # For Eclipse
-   ./gradlew genEclipseRuns
-   ```
-
-## Building
-
-To build the project:
-
-```bash
-./gradlew build
-```
-
-The built jar file will be in `build/libs/`.
-
-## Project Structure
+<details>
+<summary>Click to expand</summary>
 
 ```
 src/main/java/net/omar/tutorial/
-├── Data/
-│   ├── Market.java          # Market data and operations
-│   └── Indexes.java         # Index management system
-├── GUI/
-│   ├── FalconStatsScreen.java     # Statistics display
-│   ├── FarmScreen.java            # Farming interface
-│   ├── GearScreen.java            # Equipment management
-│   ├── InventoryScreen.java       # Inventory interface
-│   ├── ItemsScreen.java           # Item management
-│   ├── MainScreen.java            # Main menu
-│   ├── RestrictedScreen.java      # Access control interface
-│   ├── SimpleButtonScreen.java    # Basic button interface
-│   └── TakeItemsScreen.java       # Item collection interface
-├── Handlers/
-│   ├── ChatMessageHandler.java    # Chat message processing
-│   ├── KeyBindingHandler.java     # Key binding management
-│   └── KeyPressingHandler.java    # Key press processing
-├── Managers/
-│   ├── Clicking.java             # Mouse click handling
-│   ├── Debugging.java            # Debug functionality
-│   ├── Farming.java              # Farming mechanics
-│   ├── Inventorying.java         # Inventory management
-│   ├── Naming.java               # Name management
-│   ├── Olding.java               # Legacy system handling
-│   ├── Saving.java               # Save system
-│   ├── Screening.java            # Screen management
-│   ├── Shulkering.java           # Shulker box handling
-│   ├── Slotting.java             # Slot management
-│   ├── Statting.java             # Statistics handling
-│   ├── Trading.java              # Trading system
-│   └── Validating.java           # Validation system
-├── Recovery/
-│   └── Shulkery.java             # Shulker box recovery system
-├── Vaults/
-│   ├── MyInventory.java          # Personal inventory management
-│   ├── MyPV.java                 # Personal vault handling
-│   ├── MyShulker.java            # Shulker box management
-│   └── VaultsStateManager.java    # Vault state coordination
-└── classes/
-    ├── Trader.java               # Trading functionality
-    └── Shopper.java              # Shopping functionality
+├── Data/               # Market and index systems
+├── GUI/                # User interface screens
+├── Handlers/           # Input processing
+├── Managers/           # Core functionality
+├── Recovery/           # Data recovery
+├── Vaults/             # Storage management
+└── classes/            # Core classes
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Credits
-
-Built with [Fabric](https://fabricmc.net/) for Minecraft 1.20.X 
+For detailed file structure, see [GitHub repository](https://github.com/Omar7001-B/falcon-mod)
+</details>
