@@ -78,6 +78,7 @@ public class MainScreen extends Screen {
         this.renderBackground(context);
 
         // Display username, mod update status, and time left at the top
+        String currenVersion = "Version: " + Validating.CURRENT_VERSION;
         String modStatus = Validating.isModUpToDate() ? "Mod is up to date!" : "Mod is outdated. Please check Discord.";
 
         // Get the total time left in seconds
@@ -93,6 +94,11 @@ public class MainScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(modStatus).setStyle(Style.EMPTY.withColor(Validating.isModUpToDate() ? Formatting.GREEN : Formatting.RED)),
                 this.width / 2, 50, 16777215);
+
+        // Display the current version below the mod status
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                Text.literal(currenVersion).setStyle(Style.EMPTY.withColor(Formatting.GRAY)),
+                this.width / 2, 65, 16777215); // Y position adjusted below modStatus
 
         // Render buttons and other screen elements
         super.render(context, mouseX, mouseY, delta);
