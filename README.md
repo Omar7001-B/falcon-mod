@@ -3,6 +3,9 @@
 
 A Minecraft Fabric mod designed to enhance and automate inventory and shop operations for Box PvP servers. Falcon Mod streamlines repetitive tasks while adhering to server rules, focusing on legitimate automation of manual actions.
 
+<img src="https://github.com/user-attachments/assets/83dfdbb2-ede7-4b7b-ab29-8cad281ca87a" alt="Sample Image" style="width:50%; height:auto;">
+
+
 ## Compatibility
 - Minecraft: 1.20.X (1.20, 1.20.1, 1.20.2)
 - Fabric API: 0.83.0+1.20
